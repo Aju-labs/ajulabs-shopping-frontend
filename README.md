@@ -25,44 +25,93 @@ Feature-Sliced Design adaptado para React Native. O código é organizado por **
 ```
 Celular do usuário
         ↓
-   app/ (Expo Router)              ← só roteamento, nada mais
+   app/ (Expo Router)         ← só roteamento, nada mais
         ↓
-src/consumer/ ou src/lojista/      ← telas — só exibem e disparam ações
+ src/features/consumer/       ← telas do consumidor
+ src/features/lojista/        ← telas do lojista
         ↓
-      src/services/                ← busca e transforma dados
+      src/services/           ← busca e transforma dados
         ↓
-   src/mock/ → (futuro) API        ← fonte dos dados
+   src/mock/ → (futuro) API   ← fonte dos dados
         ↑
-      src/store/                   ← estado global (Zustand + React Query)
+      src/store/              ← estado global (Zustand + React Query)
         ↑
-      src/types/                   ← contratos TypeScript entre todas as camadas
+      src/types/              ← contratos TypeScript entre todas as camadas
 ```
 
 ### Estrutura de pastas
 
 ```
-app/                    → roteamento (Expo Router)
-  ├── (consumer)/       → rotas do consumidor
-  └── (lojista)/        → rotas do lojista
+app/
+  ├── (consumer)/             → rotas do consumidor (Expo Router)
+  └── (lojista)/              → rotas do lojista (Expo Router)
+
 src/
-  ├── consumer/         → telas do consumidor
-  ├── lojista/          → telas do lojista
-  ├── components/       → componentes compartilhados
-  ├── services/         → service layer (mock hoje, API amanhã)
-  ├── store/            → estado global (Zustand)
-  ├── mock/             → dados mockados de Aracaju
-  └── types/            → interfaces TypeScript
-assets/                 → ícones, imagens, fontes
+  ├── features/
+  │   ├── consumer/
+  │   │   ├── splash/         → tela de splash
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── chat/           → chat com a Aju (IA)
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── vitrines/       → listagem de lojas
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── vitrine-detail/ → detalhe da loja + produtos
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── cart/           → carrinho de compras
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── checkout/       → fluxo de pagamento
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── orders/         → histórico de pedidos
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   ├── tracking/       → rastreamento do pedido
+  │   │   │   ├── ui/
+  │   │   │   └── index.ts
+  │   │   └── profile/        → perfil e preferências
+  │   │       ├── ui/
+  │   │       └── index.ts
+  │   │
+  │   └── lojista/
+  │       ├── dashboard/      → visão geral do lojista
+  │       │   ├── ui/
+  │       │   └── index.ts
+  │       ├── pedidos/        → gestão de pedidos
+  │       │   ├── ui/
+  │       │   └── index.ts
+  │       ├── produtos/       → gestão de produtos
+  │       │   ├── ui/
+  │       │   └── index.ts
+  │       └── logistica/      → gestão de entregas
+  │           ├── ui/
+  │           └── index.ts
+  │
+  ├── components/             → componentes 100% genéricos (Button, Badge, Header...)
+  ├── store/                  → estado global (Zustand)
+  ├── services/               → service layer (mock hoje, API amanhã)
+  ├── mock/                   → dados mockados de Aracaju
+  ├── types/                  → interfaces TypeScript
+  └── theme.ts                → cores e tokens de design
+
+assets/                       → ícones, imagens, fontes
 ```
 
 ### Regras da arquitetura
 
-- **Telas** só exibem dados e disparam ações — sem lógica de negócio
-- **Services** buscam e transformam dados — não sabem nada sobre a UI
-- **Store** guarda estado global — carrinho, usuário logado, preferências
-- **Types** definem os contratos entre camadas — toda entidade tem interface TypeScript
-- **Mock** é a fonte de dados hoje — quando o backend estiver pronto, só os services mudam
+- **`app/`** — só roteamento. Arquivos finos que importam e renderizam features. Sem lógica.
+- **`features/`** — todo código de tela vive aqui. Cada feature tem sua pasta `ui/` e um `index.ts` de barrel export.
+- **`components/`** — só componentes usados em 2 ou mais features. Se é específico de uma feature, fica dentro dela.
+- **`services/`** — busca e transforma dados. Não sabe nada sobre a UI.
+- **`store/`** — estado global compartilhado (carrinho, usuário, preferências).
+- **`types/`** — toda entidade tem interface TypeScript. É o contrato entre as camadas.
+- **`mock/`** — fonte de dados hoje. Quando o backend estiver pronto, só os services mudam.
 
+---
 
 ## Setup do ambiente
 
@@ -71,6 +120,34 @@ assets/                 → ícones, imagens, fontes
 - Node.js 20+
 - Git
 - Expo Go instalado no celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+
+### Expo CLI e EAS CLI
+
+O Expo CLI é usado via `npx` — não precisa instalar globalmente. O único que precisa de instalação global é o **EAS CLI**, usado para gerar builds de produção na nuvem.
+
+```bash
+npm install -g eas-cli
+```
+
+**Criar conta no Expo (necessário para o EAS Build)**
+
+1. Acesse [expo.dev](https://expo.dev) e clique em **Sign Up**
+2. Crie sua conta com e-mail e senha e confirme o e-mail
+3. Volte ao terminal e faça login:
+
+```bash
+eas login
+# Digite seu e-mail e senha quando solicitado
+```
+
+**Instalar o Expo Go no celular**
+
+O Expo Go roda o projeto durante o desenvolvimento, sem precisar gerar um APK completo.
+
+- **Android** — [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+- **iOS** — [App Store](https://apps.apple.com/app/expo-go/id982107779)
+
+---
 
 ### Instalação
 
@@ -87,16 +164,23 @@ npm install
 
 # 4. Crie o arquivo de variáveis de ambiente
 cp .env.example .env
-# Edite o .env e adicione sua chave da Claude API
+# Edite o .env conforme a seção abaixo
 ```
 
 ### Variáveis de ambiente
 
 ```bash
+# Papel do dev durante desenvolvimento — define qual fluxo renderizar
+# Valores aceitos: 'consumer' | 'lojista'
+EXPO_PUBLIC_DEV_ROLE=consumer
+
+# Chave da Claude API (assistente Aju)
 ANTHROPIC_API_KEY=sua_chave_aqui
 ```
 
-Obtenha sua chave em [console.anthropic.com](https://console.anthropic.com).
+> O arquivo `.env` **nunca é commitado**. O `.env.example` é o template — edite o `.env` localmente.
+>
+> Obtenha sua chave da Claude API em [console.anthropic.com](https://console.anthropic.com).
 
 ### Rodar o projeto
 
@@ -104,29 +188,41 @@ Obtenha sua chave em [console.anthropic.com](https://console.anthropic.com).
 npx expo start
 ```
 
-Escaneie o QR code com o Expo Go no celular. O app vai abrir em segundos.
+Escaneie o QR code com o Expo Go no celular.
 
 ---
 
 ## Fluxo Git
 
 ```bash
-# Antes de começar
+# Antes de começar qualquer tarefa
 git checkout main && git pull origin main
 
-# Criar branch para sua feature
-git checkout -b consumer/nome-da-tela
+# Criar branch seguindo Conventional Commits
+git checkout -b feat/consumer-splash-screen
+git checkout -b feat/consumer-chat-ia
+git checkout -b feat/lojista-pedidos
+git checkout -b refactor/setup-feature-sliced-design
 
 # Commitar
 git add .
-git commit -m "feat: descrição do que foi feito"
+git commit -m "feat(consumer): add splash screen with logo animation"
 
 # Subir e abrir PR
-git push origin consumer/nome-da-tela
+git push origin feat/consumer-splash-screen
 ```
 
-> **Nunca faça push direto na main.** Todo código entra via Pull Request revisado por outro dev.
+### Padrão de commits (Conventional Commits)
 
+| Prefixo | Quando usar | Exemplo |
+|---|---|---|
+| `feat` | Nova funcionalidade | `feat(consumer): add cart screen` |
+| `fix` | Correção de bug | `fix(cart): total not updating on remove` |
+| `refactor` | Refatoração sem mudança funcional | `refactor(checkout): extract AddressCard` |
+| `style` | Ajuste visual sem lógica | `style(vitrine): fix card border radius` |
+| `chore` | Config, deps, estrutura | `chore: add .env.example` |
+
+> **Nunca faça push direto na main.** Todo código entra via Pull Request com mínimo de 1 aprovação.
 
 ---
 
