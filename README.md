@@ -22,34 +22,38 @@ Feature-Sliced Design adaptado para React Native. O código é organizado por **
 
 ### Como as camadas se comunicam
 
+```
 Celular do usuário
-↓
-app/ (Expo Router)             ← só roteamento, nada mais
-↓
-src/consumer/ ou src/lojista/     ← telas — só exibem e disparam ações
-↓
-src/services/               ← busca e transforma dados
-↓
-src/mock/ → (futuro) API       ← fonte dos dados
-↑
-src/store/                  ← estado global (Zustand + React Query)
-↑
-src/types/                  ← contratos TypeScript entre todas as camadas
+        ↓
+   app/ (Expo Router)              ← só roteamento, nada mais
+        ↓
+src/consumer/ ou src/lojista/      ← telas — só exibem e disparam ações
+        ↓
+      src/services/                ← busca e transforma dados
+        ↓
+   src/mock/ → (futuro) API        ← fonte dos dados
+        ↑
+      src/store/                   ← estado global (Zustand + React Query)
+        ↑
+      src/types/                   ← contratos TypeScript entre todas as camadas
+```
 
 ### Estrutura de pastas
 
+```
 app/                    → roteamento (Expo Router)
-├── (consumer)/       → rotas do consumidor
-└── (lojista)/        → rotas do lojista
+  ├── (consumer)/       → rotas do consumidor
+  └── (lojista)/        → rotas do lojista
 src/
-├── consumer/         → telas do consumidor
-├── lojista/          → telas do lojista
-├── components/       → componentes compartilhados
-├── services/         → service layer (mock hoje, API amanhã)
-├── store/            → estado global (Zustand)
-├── mock/             → dados mockados de Aracaju
-└── types/            → interfaces TypeScript
+  ├── consumer/         → telas do consumidor
+  ├── lojista/          → telas do lojista
+  ├── components/       → componentes compartilhados
+  ├── services/         → service layer (mock hoje, API amanhã)
+  ├── store/            → estado global (Zustand)
+  ├── mock/             → dados mockados de Aracaju
+  └── types/            → interfaces TypeScript
 assets/                 → ícones, imagens, fontes
+```
 
 ### Regras da arquitetura
 
