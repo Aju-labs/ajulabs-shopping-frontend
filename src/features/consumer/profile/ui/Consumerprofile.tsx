@@ -92,7 +92,7 @@ export function ConsumerProfile({ dark = false }: ConsumerProfileProps) {
       icon: ICONS.orders,
       label: 'Meus pedidos',
       badge: 3,
-      onPress: () => router.push('/(consumer)/meus-pedidos'),
+      onPress: () => router.push('/(consumer)/pedidos')
     },
     {
       icon: ICONS.location,

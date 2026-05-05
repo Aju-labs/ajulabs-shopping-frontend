@@ -96,6 +96,11 @@ export default function ConsumerLayout() {
         name="vitrine/[id]"
         options={{ href: null }}
       />
+      <Tabs.Screen name="enderecos" options={{ href: null }} />
+      <Tabs.Screen name="pagamento" options={{ href: null }} />
+      <Tabs.Screen name="favoritos" options={{ href: null }} />
+      <Tabs.Screen name="notificacoes" options={{ href: null }} />
+      <Tabs.Screen name="ajustes" options={{ href: null }} />
     </Tabs>
   );
 }
