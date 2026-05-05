@@ -6,7 +6,7 @@ import { ChatMsg } from './ChatMsg';
 import { ChatInput } from './ChatInput';
 import { matchAju } from '@ajulabs/api-client';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-
+import { useRouter } from 'expo-router';
 
 const SUGESTOES_INICIAIS = [
   'Tênis preto até R$200',
@@ -25,6 +25,8 @@ export function ChatIA() {
   const [mensagens, setMensagens] = useState<MensagemChat[]>([MENSAGEM_INICIAL]);
   const [sugestoes, setSugestoes] = useState<string[]>(SUGESTOES_INICIAIS);
   const [carregando, setCarregando] = useState(false);
+  
+  const router = useRouter();
 
   async function handleEnviar(texto: string) {
     if (!texto.trim() || carregando) return;
@@ -91,10 +93,10 @@ return (
             </Text>
             <Text style={{ fontSize: 12, color: '#22c55e' }}>● Online agora</Text>
           </View>
-        </View>
-        <TouchableOpacity>
-          <ShoppingCart size={22} color="#374151" />
-        </TouchableOpacity>
+        </View>   
+        <TouchableOpacity onPress={() => router.push('/(consumer)/carrinho')}>
+        <ShoppingCart size={22} color="#374151" />
+      </TouchableOpacity>
       </View>
 
       {/* Mensagens */}

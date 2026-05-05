@@ -47,7 +47,14 @@ export function VerifyCodeScreen() {
     const ok = await verificarCodigo(codigo);
     setLoading(false);
     if (ok) {
-      router.replace('/(consumer)/vitrines');
+      const nome = useAuthStore.getState().nome;
+      if (nome) {
+        // Usuário já tem nome → vai direto pro app
+        router.replace('/(consumer)/chat');
+      } else {
+        // Primeiro acesso → pede o nome
+        router.replace('/(auth)/register');
+      }
     } else {
       Alert.alert('Código inválido', 'Confira o SMS e tente novamente.');
       setDigits(['', '', '', '']);
