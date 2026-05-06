@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../src/features/entregador/home';
 import { ActiveScreen } from '../src/features/entregador/corrida-ativa';
 import { EarningsScreen } from '../src/features/entregador/ganhos';
 import { ProfileScreen } from '../src/features/entregador/perfil';
 import { OnboardingScreen } from '../src/features/entregador/onboarding';
 
-// Definição de corrida ativa
 interface ActiveRide {
   id: string;
   loja: { nome: string; endereco: string; bairro: string };
@@ -16,10 +16,6 @@ interface ActiveRide {
   duracao: number;
   codigo: string;
 }
-
-// Componente de navegação inferior (Tab bar)
-import { Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 type Tab = 'home' | 'ganhos' | 'perfil';
 
@@ -86,7 +82,6 @@ const nav = StyleSheet.create({
   },
 });
 
-// ─── App Shell ───────────────────────────────────────────────
 type Screen = 'onboarding' | 'approval' | 'main' | 'active';
 
 function ApprovalScreen({ onContinue }: { onContinue: () => void }) {
@@ -110,9 +105,12 @@ function ApprovalScreen({ onContinue }: { onContinue: () => void }) {
       <Text style={{ fontSize: 26, fontWeight: '800', color: '#000933', marginBottom: 10, textAlign: 'center' }}>
         Cadastro enviado!
       </Text>
-      <Text style={{ fontSize: 14, color: '#9099B3', textAlign: 'center', lineHeight: 21, maxWidth: 280, marginBottom: 28 }}>
-        Análise em até 24h. Como essa é uma demo, já liberamos tudo — bora começar a rodar 🛵
-      </Text>
+      <View style={{ alignItems: 'center', maxWidth: 280, marginBottom: 28, gap: 4 }}>
+        <Text style={{ fontSize: 14, color: '#9099B3', textAlign: 'center', lineHeight: 21 }}>
+          Análise em até 24h. Como essa é uma demo, já liberamos tudo — bora começar a rodar
+        </Text>
+        <Ionicons name="car-sport" size={18} color="#9099B3" />
+      </View>
       <TouchableOpacity
         style={{ backgroundColor: '#F2760F', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 40 }}
         onPress={onContinue}

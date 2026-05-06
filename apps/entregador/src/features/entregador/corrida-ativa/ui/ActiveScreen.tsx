@@ -101,12 +101,12 @@ export function ActiveScreen({ ride, onFinish }: ActiveScreenProps) {
 
   return (
     <SafeAreaView style={s.safeArea}>
-      {/* Mapa simulado fullscreen */}
       <View style={s.mapBg}>
-        <Text style={s.mapEmoji}>🗺️</Text>
+        <View style={{ opacity: 0.3 }}>
+          <Ionicons name="map" size={80} color="#FFFFFF" />
+        </View>
       </View>
 
-      {/* Barra de progresso no topo */}
       <View style={s.progressCard}>
         <View style={s.progressBars}>
           {STAGES.map((_, i) => (
@@ -128,7 +128,6 @@ export function ActiveScreen({ ride, onFinish }: ActiveScreenProps) {
         </View>
       </View>
 
-      {/* FABs flutuantes */}
       {stage !== 'delivered' && (
         <View style={s.fabs}>
           <TouchableOpacity style={[s.fab, { backgroundColor: '#39FF89' }]} activeOpacity={0.8}>
@@ -143,7 +142,6 @@ export function ActiveScreen({ ride, onFinish }: ActiveScreenProps) {
         </View>
       )}
 
-      {/* Bottom sheet contextual */}
       <View style={s.bottomSheet}>
         {stage === 'to-store' && (
           <StageCard
@@ -234,7 +232,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0B0F22',
   },
-  mapEmoji: { fontSize: 80, opacity: 0.3 },
   progressCard: {
     position: 'absolute',
     top: 60,
@@ -337,7 +334,6 @@ const s = StyleSheet.create({
     paddingVertical: 16,
   },
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  // At store
   codeLabel: { fontSize: 11, color: '#9099B3', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   codeRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   codeDigit: {
@@ -361,7 +357,6 @@ const s = StyleSheet.create({
     marginBottom: 14,
   },
   codeHintText: { fontSize: 12.5, color: '#000933', lineHeight: 18 },
-  // Delivered
   successCircle: {
     width: 64,
     height: 64,

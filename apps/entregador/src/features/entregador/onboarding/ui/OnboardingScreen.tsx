@@ -191,7 +191,10 @@ function StepRevisao({ data }: { data: Record<string, string> }) {
   return (
     <View>
       <View style={s.reviewHero}>
-        <Text style={s.reviewTitle}>Tudo pronto! 🎉</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={s.reviewTitle}>Tudo pronto!</Text>
+          <Ionicons name="happy" size={22} color="#FFFFFF" />
+        </View>
         <Text style={s.reviewSub}>Vamos revisar seu cadastro. A análise sai em até 24h.</Text>
       </View>
       {rows.map((r) => (
@@ -244,7 +247,6 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
 
   return (
     <SafeAreaView style={s.safeArea}>
-      {/* Header com progresso */}
       <View style={s.header}>
         <View style={s.headerRow}>
           <TouchableOpacity style={s.backBtn} onPress={prev} activeOpacity={0.8}>
@@ -281,7 +283,6 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         {cur.title === 'Revisão' && <StepRevisao data={data} />}
       </ScrollView>
 
-      {/* CTA */}
       <View style={s.footer}>
         <TouchableOpacity style={s.ctaBtn} onPress={next} activeOpacity={0.85}>
           <Text style={s.ctaBtnText}>
