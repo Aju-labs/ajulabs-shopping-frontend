@@ -56,7 +56,6 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
         <View style={s.hero}>
           <View style={s.heroRow}>
             <View style={s.avatar}>
@@ -64,13 +63,13 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={s.heroName}>{COURIER.nome}</Text>
-              <Text style={s.heroTransporte}>
-                🏍️ {COURIER.transporte} · {COURIER.placa}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                <Ionicons name="car-sport" size={12} color="rgba(255,255,255,0.7)" />
+                <Text style={s.heroTransporte}>{COURIER.transporte} · {COURIER.placa}</Text>
+              </View>
             </View>
           </View>
 
-          {/* Stats */}
           <View style={s.statsBox}>
             <View style={s.statCol}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -92,7 +91,6 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
           </View>
         </View>
 
-        {/* Conquistas */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Conquistas</Text>
           <ScrollView
@@ -111,7 +109,6 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
           </ScrollView>
         </View>
 
-        {/* Menu */}
         <View style={s.menuCard}>
           {menuItems.map((item, i) => (
             <TouchableOpacity
@@ -136,7 +133,6 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
           ))}
         </View>
 
-        {/* Logout */}
         <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.8}>
           <Text style={s.logoutText}>Sair</Text>
         </TouchableOpacity>
@@ -169,7 +165,7 @@ const s = StyleSheet.create({
   },
   avatarText: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
   heroName: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.3 },
-  heroTransporte: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 },
+  heroTransporte: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   statsBox: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.08)',

@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ─── Mock data ────────────────────────────────────────────────
 const COURIER_TODAY = {
   ganho: 187.5,
   corridas: 12,
@@ -38,7 +37,6 @@ const LIVE_RIDE = {
 const brl = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// ─── Offer sheet ──────────────────────────────────────────────
 function OfferSheet({
   ride,
   countdown,
@@ -53,7 +51,6 @@ function OfferSheet({
   const pct = (countdown / 15) * 100;
   return (
     <View style={s.offerSheet}>
-      {/* Timer bar */}
       <View style={s.timerTrack}>
         <View
           style={[
@@ -79,7 +76,6 @@ function OfferSheet({
           </View>
         </View>
 
-        {/* Valor */}
         <View style={s.valueBanner}>
           <View>
             <Text style={s.valueLabel}>Você ganha</Text>
@@ -92,7 +88,6 @@ function OfferSheet({
           </View>
         </View>
 
-        {/* Rota */}
         <View style={s.routeBox}>
           <View style={s.routeRow}>
             <View style={[s.routeDot, { backgroundColor: '#000933' }]} />
@@ -117,7 +112,6 @@ function OfferSheet({
           </View>
         </View>
 
-        {/* Botões */}
         <View style={s.offerBtns}>
           <TouchableOpacity
             style={s.btnReject}
@@ -139,7 +133,6 @@ function OfferSheet({
   );
 }
 
-// ─── HomeScreen ───────────────────────────────────────────────
 interface HomeScreenProps {
   onAcceptRide: (ride: typeof LIVE_RIDE) => void;
 }
@@ -149,7 +142,6 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
   const [offer, setOffer] = useState<typeof LIVE_RIDE | null>(null);
   const [countdown, setCountdown] = useState(15);
 
-  // Simula oferta chegando após 3s de online
   useEffect(() => {
     if (!online || offer) return;
     const t = setTimeout(() => {
@@ -159,7 +151,6 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
     return () => clearTimeout(t);
   }, [online, offer]);
 
-  // Countdown da oferta
   useEffect(() => {
     if (!offer) return;
     if (countdown <= 0) {
@@ -172,13 +163,11 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
 
   return (
     <SafeAreaView style={s.safeArea}>
-      {/* Mapa simulado */}
       <View style={s.mapPlaceholder}>
-        <Text style={s.mapText}>🗺️</Text>
+        <Ionicons name="map" size={64} color="rgba(255,255,255,0.4)" />
         <Text style={s.mapSub}>Mapa — Aracaju, SE</Text>
       </View>
 
-      {/* Toggle online/offline */}
       <View style={s.topBar}>
         <TouchableOpacity
           style={[s.onlineToggle, { backgroundColor: online ? '#39FF89' : '#FFFFFF' }]}
@@ -234,7 +223,6 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Overlay offline */}
       {!online && (
         <View style={s.offlineOverlay}>
           <View style={s.offlineIcon}>
@@ -247,7 +235,6 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
         </View>
       )}
 
-      {/* Resumo do dia */}
       {online && !offer && (
         <View style={s.summaryCard}>
           <View style={s.summaryHeader}>
@@ -284,7 +271,6 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
         </View>
       )}
 
-      {/* Oferta de corrida */}
       {offer && (
         <OfferSheet
           ride={offer}
@@ -308,7 +294,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0B0F22',
   },
-  mapText: { fontSize: 64 },
   mapSub: { fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8 },
   topBar: {
     position: 'absolute',
@@ -437,7 +422,6 @@ const s = StyleSheet.create({
     borderRadius: 10,
   },
   metaText: { fontSize: 11.5, color: '#F2760F', fontWeight: '600', flex: 1 },
-  // Offer sheet
   offerSheet: {
     position: 'absolute',
     bottom: 0,
