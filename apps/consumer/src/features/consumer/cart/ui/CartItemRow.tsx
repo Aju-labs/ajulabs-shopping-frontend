@@ -1,6 +1,6 @@
-// src/features/consumer/cart/ui/CartItemRow.tsx
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ItemCarrinho } from '@ajulabs/types';
 import { colors } from '@ajulabs/theme';
 
@@ -36,7 +36,7 @@ export function CartItemRow({ item, onAumentar, onDiminuir }: Props) {
 
       <View style={styles.qtdBox}>
         <TouchableOpacity onPress={() => onDiminuir(item.produto.id)} style={styles.btnMenos} activeOpacity={0.7}>
-          <Text style={styles.btnMenosTxt}>×</Text>
+          <Ionicons name="remove-outline" size={14} color={colors.n600} />
         </TouchableOpacity>
         <Text style={styles.qtd}>{item.quantidade}</Text>
         <TouchableOpacity onPress={() => onAumentar(item.produto.id)} style={styles.btnMais} activeOpacity={0.85}>
@@ -57,7 +57,6 @@ const styles = StyleSheet.create({
   qtdBox:     { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.n200,
                 borderRadius: 99, paddingHorizontal: 4, paddingVertical: 2, gap: 8, backgroundColor: colors.n0 },
   btnMenos:   { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
-  btnMenosTxt:{ color: colors.n600, fontSize: 16, fontWeight: '600' },
   qtd:        { fontSize: 13, fontWeight: '600', color: colors.navy, minWidth: 12, textAlign: 'center' },
   btnMais:    { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.orange,
                 alignItems: 'center', justifyContent: 'center' },

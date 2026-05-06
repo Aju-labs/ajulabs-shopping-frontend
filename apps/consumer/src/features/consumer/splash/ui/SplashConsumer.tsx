@@ -23,7 +23,6 @@ export function SplashConsumer({ onDone }: SplashConsumerProps) {
   const screenOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Entrada: logo primeiro, texto depois
     Animated.sequence([
       Animated.parallel([
         Animated.timing(logoOpacity, {
@@ -51,7 +50,6 @@ export function SplashConsumer({ onDone }: SplashConsumerProps) {
       ]),
     ]).start();
 
-    // Fade out e chama onDone
     const timer = setTimeout(() => {
       Animated.timing(screenOpacity, {
         toValue: 0,
@@ -67,15 +65,10 @@ export function SplashConsumer({ onDone }: SplashConsumerProps) {
     <Animated.View style={[styles.container, { opacity: screenOpacity }]}>
       <StatusBar barStyle="light-content" backgroundColor="#000933" />
 
-      {/* Glow laranja — topo direito */}
       <View style={styles.glowOrange} />
-
-      {/* Glow azul escuro — base esquerda */}
       <View style={styles.glowBlue} />
 
-      {/* Conteúdo central */}
       <View style={styles.center}>
-        {/* Logo */}
         <Animated.View
           style={{
             opacity: logoOpacity,
@@ -85,7 +78,6 @@ export function SplashConsumer({ onDone }: SplashConsumerProps) {
           <SplashLogo size={72} />
         </Animated.View>
 
-        {/* Título + subtítulo */}
         <Animated.View
           style={[
             styles.textBlock,
@@ -104,12 +96,10 @@ export function SplashConsumer({ onDone }: SplashConsumerProps) {
         </Animated.View>
       </View>
 
-      {/* Barra de loading */}
       <View style={styles.loaderWrapper}>
         <SplashLoader />
       </View>
 
-      {/* Rodapé */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           BY <Text style={styles.footerBold}>AJULABS</Text>
@@ -129,7 +119,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Glows — imitam o gradiente radial do protótipo
   glowOrange: {
     position: 'absolute',
     width: 480,

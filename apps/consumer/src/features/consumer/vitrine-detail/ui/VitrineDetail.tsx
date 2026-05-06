@@ -1,6 +1,6 @@
-// src/features/consumer/vitrine-detail/ui/VitrineDetail.tsx
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { getLojaById, getProdutosByLoja } from '@ajulabs/api-client';
 import { colors } from '@ajulabs/theme';
@@ -13,11 +13,21 @@ interface VitrineDetailProps {
 }
 
 function Stars({ value }: { value: number }) {
-  const stars = Array.from({ length: 5 }, (_, i) => i < Math.floor(value) ? '★' : '☆');
-  return <Text style={{ color: colors.orange, fontSize: 12, letterSpacing: 1 }}>{stars.join('')}</Text>;
+  return (
+    <View style={{ flexDirection: 'row', gap: 1 }}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Ionicons
+          key={i}
+          name={i < Math.floor(value) ? 'star' : 'star-outline'}
+          size={12}
+          color={colors.orange}
+        />
+      ))}
+    </View>
+  );
 }
 
-function BannerImg({ uri, nome }: { uri: string; nome: string }) {
+function BannerImg({ uri }: { uri: string }) {
   const [error, setError] = useState(false);
   if (error) {
     return <View style={[styles.banner, { backgroundColor: colors.orange100 }]} />;
@@ -67,16 +77,14 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
     <View style={[styles.container, { backgroundColor: bgMain }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* Banner */}
         <View style={styles.bannerWrapper}>
-          <BannerImg uri={loja.imagem} nome={loja.nome} />
+          <BannerImg uri={loja.imagem} />
           <View style={styles.bannerGradient} />
           <TouchableOpacity style={styles.btnBack} onPress={() => router.back()} activeOpacity={0.85}>
-            <Text style={{ fontSize: 20, color: colors.navy, fontWeight: '600' }}>‹</Text>
+            <Ionicons name="chevron-back" size={20} color={colors.navy} />
           </TouchableOpacity>
         </View>
 
-        {/* Card info da loja */}
         <View style={styles.infoCardWrapper}>
           <View style={[styles.infoCard, { backgroundColor: surface, borderColor: border }]}>
             <View style={styles.infoTop}>
@@ -94,16 +102,17 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
               </View>
             </View>
 
-            {/* Badges */}
             <View style={styles.badgesRow}>
               <View style={[styles.badge, { backgroundColor: 'rgba(57,255,137,0.15)' }]}>
+                <Ionicons name="time-outline" size={12} color="#046C2E" />
                 <Text style={[styles.badgeText, { color: '#046C2E' }]}>
-                  🛵 {loja.tempoEntregaMin}–{loja.tempoEntregaMax} min
+                  {loja.tempoEntregaMin}–{loja.tempoEntregaMax} min
                 </Text>
               </View>
               <View style={[styles.badge, { backgroundColor: dark ? 'rgba(255,255,255,0.06)' : colors.n100 }]}>
+                <Ionicons name="cube-outline" size={12} color={textColor} />
                 <Text style={[styles.badgeText, { color: textColor }]}>
-                  {loja.taxaEntrega === 0 ? '🚚 Frete grátis' : `🚚 R$ ${loja.taxaEntrega.toFixed(2).replace('.', ',')}`}
+                  {loja.taxaEntrega === 0 ? 'Frete grátis' : `R$ ${loja.taxaEntrega.toFixed(2).replace('.', ',')}`}
                 </Text>
               </View>
               {!loja.aberta && (
@@ -113,18 +122,17 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
               )}
             </View>
 
-            {/* Botão Aju */}
             <TouchableOpacity
               style={styles.btnAju}
               onPress={() => router.push('/(consumer)/chat')}
               activeOpacity={0.85}
             >
-              <Text style={styles.btnAjuText}>✨ Conversar com a Aju sobre essa loja</Text>
+              <Ionicons name="chatbubble-ellipses-outline" size={14} color={colors.n0} />
+              <Text style={styles.btnAjuText}>Conversar com a Aju sobre essa loja</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Chips de categoria */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {cats.map(cat => {
             const ativo = cat === catSelecionada;
@@ -143,7 +151,6 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
           })}
         </ScrollView>
 
-        {/* Grid de produtos */}
         <View style={styles.grid}>
           {produtosFiltrados.map(p => (
             <View key={p.id} style={styles.gridItem}>
@@ -179,10 +186,12 @@ const styles = StyleSheet.create({
   lojaNome:        { fontWeight: '700', fontSize: 18, letterSpacing: -0.3, lineHeight: 22 },
   lojaCategoria:   { fontSize: 12, marginTop: 2 },
   badgesRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 },
-  badge:           { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 99 },
+  badge:           { flexDirection: 'row', alignItems: 'center', gap: 4,
+                     paddingHorizontal: 8, paddingVertical: 5, borderRadius: 99 },
   badgeText:       { fontSize: 11.5, fontWeight: '600' },
   btnAju:          { marginTop: 14, paddingVertical: 10, borderRadius: 12,
-                     alignItems: 'center', backgroundColor: colors.orange,
+                     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                     backgroundColor: colors.orange,
                      shadowColor: colors.orange, shadowOffset: { width: 0, height: 4 },
                      shadowOpacity: 0.3, shadowRadius: 14, elevation: 4 },
   btnAjuText:      { color: colors.n0, fontSize: 13.5, fontWeight: '600' },

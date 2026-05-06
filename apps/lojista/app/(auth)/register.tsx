@@ -1,5 +1,5 @@
-import { CadastroConsumer } from '../../src/features/consumer/auth/ui/CadastroConsumer';
+import { CadastroLojista } from '../../src/features/lojista/auth/ui/CadastroLojista';
 
 export default function RegisterScreen() {
-  return <CadastroConsumer />;
+  return <CadastroLojista />;
 }

@@ -1,6 +1,6 @@
-// src/features/consumer/vitrines/ui/LojaCard.tsx
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Loja } from '@ajulabs/types';
 import { colors } from '@ajulabs/theme';
 
@@ -29,8 +29,18 @@ function LojaImg({ uri, nome }: { uri: string; nome: string }) {
 }
 
 function Stars({ value }: { value: number }) {
-  const stars = Array.from({ length: 5 }, (_, i) => i < Math.floor(value) ? '★' : '☆');
-  return <Text style={styles.stars}>{stars.join('')}</Text>;
+  return (
+    <View style={{ flexDirection: 'row', gap: 1 }}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Ionicons
+          key={i}
+          name={i < Math.floor(value) ? 'star' : 'star-outline'}
+          size={11}
+          color={colors.orange}
+        />
+      ))}
+    </View>
+  );
 }
 
 export function LojaCard({ loja, onPress, dark = false }: LojaCardProps) {
@@ -74,7 +84,7 @@ export function LojaCard({ loja, onPress, dark = false }: LojaCardProps) {
         )}
       </View>
 
-      <Text style={{ color: subColor, fontSize: 20, alignSelf: 'center' }}>›</Text>
+      <Ionicons name="chevron-forward" size={18} color={subColor as string} style={{ alignSelf: 'center' }} />
     </TouchableOpacity>
   );
 }
@@ -91,7 +101,6 @@ const styles = StyleSheet.create({
   sub:             { fontSize: 11, marginTop: 2 },
   row:             { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, flexWrap: 'wrap' },
   aval:            { fontSize: 11 },
-  stars:           { color: colors.orange, fontSize: 11, letterSpacing: 1 },
   badgeMint:       { backgroundColor: 'rgba(57,255,137,0.15)',
                      paddingHorizontal: 6, paddingVertical: 2, borderRadius: 99, marginLeft: 4 },
   badgeMintText:   { fontSize: 10, fontWeight: '600', color: '#046C2E' },

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@ajulabs/theme';
 import { USUARIO_MOCK } from '@ajulabs/api-client';
 
@@ -26,7 +27,8 @@ export function ProfileHeader() {
         <Text style={styles.email}>{user.email}</Text>
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
-            <Text style={styles.badgeTxt}>⚡ Cliente desde 2024</Text>
+            <Ionicons name="flash" size={11} color={colors.orange600} />
+            <Text style={styles.badgeTxt}>Cliente desde 2024</Text>
           </View>
         </View>
       </View>
@@ -47,7 +49,8 @@ const styles = StyleSheet.create({
   email:      { fontSize: 12, color: colors.n600, marginTop: 2 },
 
   badgeRow:   { flexDirection: 'row', gap: 6, marginTop: 6 },
-  badge:      { backgroundColor: colors.orange100, paddingHorizontal: 10, paddingVertical: 3,
+  badge:      { flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: colors.orange100, paddingHorizontal: 10, paddingVertical: 3,
                 borderRadius: 99 },
   badgeTxt:   { fontSize: 11, fontWeight: '600', color: colors.orange600 },
 });

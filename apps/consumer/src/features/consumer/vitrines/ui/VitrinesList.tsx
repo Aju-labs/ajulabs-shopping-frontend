@@ -1,6 +1,6 @@
-// src/features/consumer/vitrines/ui/VitrinesList.tsx
 import { useState, useCallback } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LOJAS } from '@ajulabs/api-client';
 import { colors } from '@ajulabs/theme';
@@ -36,8 +36,6 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
-
-      {/* Cabeçalho */}
       <View style={[styles.header, { backgroundColor: surface, borderBottomColor: border }]}>
         <Text style={[styles.titulo, { color: textColor }]}>Lojas em Aracaju</Text>
         <Text style={[styles.subtitulo, { color: subColor }]}>
@@ -47,7 +45,7 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
           backgroundColor: dark ? 'rgba(255,255,255,0.05)' : colors.n50,
           borderColor: border,
         }]}>
-          <Text style={{ color: subColor, fontSize: 16 }}>🔍</Text>
+          <Ionicons name="search-outline" size={16} color={subColor as string} />
           <TextInput
             style={[styles.buscaInput, { color: textColor }]}
             placeholder="Buscar lojas ou bairros…"
@@ -58,7 +56,6 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
         </View>
       </View>
 
-      {/* Lista */}
       <FlatList
         data={lojasFiltradas}
         keyExtractor={(item) => item.id}

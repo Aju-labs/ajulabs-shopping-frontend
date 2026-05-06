@@ -1,4 +1,3 @@
-// src/features/consumer/vitrine-detail/ui/ProdutoCard.tsx
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Produto } from '@ajulabs/types';

@@ -1,4 +1,3 @@
-// src/store/cartStore.ts
 import { create } from 'zustand';
 import { Produto, ItemCarrinho } from '@ajulabs/types';
 import { getLojaById } from '@ajulabs/api-client';
@@ -95,10 +94,6 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   limparTudo: () => set({ itensPorLoja: {} }),
 }));
-
-// ─── Helpers fora do store ─────────────────────────────────────
-// São funções puras que recebem o estado e calculam o derivado.
-// Use-as dentro de useMemo no componente, nunca como retorno de seletor.
 
 export function calcularGrupos(
   itensPorLoja: Record<string, ItemCarrinho[]>

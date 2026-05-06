@@ -1,6 +1,6 @@
-// src/features/consumer/vitrines/ui/LojasDestaque.tsx
 import { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LOJAS } from '@ajulabs/api-client';
 import { Loja } from '@ajulabs/types';
 import { colors } from '@ajulabs/theme';
@@ -38,7 +38,10 @@ export function LojasDestaque({ onAbrirVitrine, dark = false }: Props) {
 
   return (
     <View style={s.container}>
-      <Text style={[s.titulo, { color: textColor }]}>⭐ Destaques</Text>
+      <View style={s.tituloRow}>
+        <Ionicons name="star" size={14} color={colors.orange} />
+        <Text style={[s.titulo, { color: textColor }]}>Destaques</Text>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.scroll}>
         {destaques.map(loja => (
@@ -48,21 +51,21 @@ export function LojasDestaque({ onAbrirVitrine, dark = false }: Props) {
             onPress={() => onAbrirVitrine(loja.id)}
             activeOpacity={0.88}
           >
-            {/* Imagem */}
             <Image source={{ uri: loja.imagem }} style={s.img} />
             <View style={s.imgOverlay} />
             <View style={s.badgeDestaque}>
-              <Text style={s.badgeText}>⭐ Destaque</Text>
+              <Ionicons name="star" size={10} color="#fff" />
+              <Text style={s.badgeText}>Destaque</Text>
             </View>
 
-            {/* Info */}
             <View style={s.info}>
               <Text style={[s.nome, { color: textColor }]} numberOfLines={1}>{loja.nome}</Text>
               <Text style={[s.desc, { color: subColor }]} numberOfLines={1}>
                 {loja.descricao}
               </Text>
               <View style={s.row}>
-                <Text style={s.rating}>★ {loja.avaliacao.toFixed(1)}</Text>
+                <Ionicons name="star" size={12} color={colors.orange} />
+                <Text style={s.rating}>{loja.avaliacao.toFixed(1)}</Text>
                 <Text style={[s.sub, { color: subColor }]}>· {loja.tempoEntregaMin}–{loja.tempoEntregaMax} min</Text>
               </View>
               <TouchableOpacity
@@ -83,24 +86,27 @@ export function LojasDestaque({ onAbrirVitrine, dark = false }: Props) {
 const CARD_WIDTH = 200;
 
 const s = StyleSheet.create({
-  container: { paddingTop: 16, paddingBottom: 4 },
-  titulo:    { fontSize: 15, fontWeight: '700', letterSpacing: -0.2, paddingHorizontal: 16, marginBottom: 12 },
-  scroll:    { paddingHorizontal: 16, gap: 12 },
-  card:      { width: CARD_WIDTH, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
-  img:       { width: '100%', height: 110 },
-  imgOverlay:{ position: 'absolute', top: 0, left: 0, right: 0, height: 110,
-               backgroundColor: 'rgba(0,9,51,0.18)' },
-  badgeDestaque: { position: 'absolute', top: 10, left: 10,
+  container:     { paddingTop: 16, paddingBottom: 4 },
+  tituloRow:     { flexDirection: 'row', alignItems: 'center', gap: 6,
+                   paddingHorizontal: 16, marginBottom: 12 },
+  titulo:        { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  scroll:        { paddingHorizontal: 16, gap: 12 },
+  card:          { width: CARD_WIDTH, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  img:           { width: '100%', height: 110 },
+  imgOverlay:    { position: 'absolute', top: 0, left: 0, right: 0, height: 110,
+                   backgroundColor: 'rgba(0,9,51,0.18)' },
+  badgeDestaque: { position: 'absolute', top: 10, left: 10, flexDirection: 'row',
+                   alignItems: 'center', gap: 3,
                    backgroundColor: colors.orange,
                    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  info:      { padding: 10 },
-  nome:      { fontSize: 13.5, fontWeight: '700', letterSpacing: -0.2 },
-  desc:      { fontSize: 11, marginTop: 2, color: '#9099B3' },
-  row:       { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 },
-  rating:    { fontSize: 12, fontWeight: '700', color: colors.orange },
-  sub:       { fontSize: 11 },
-  btnVer:    { marginTop: 10, backgroundColor: colors.orange,
-               borderRadius: 10, paddingVertical: 7, alignItems: 'center' },
-  btnVerText:{ fontSize: 12.5, fontWeight: '700', color: '#fff' },
+  badgeText:     { color: '#fff', fontSize: 10, fontWeight: '700' },
+  info:          { padding: 10 },
+  nome:          { fontSize: 13.5, fontWeight: '700', letterSpacing: -0.2 },
+  desc:          { fontSize: 11, marginTop: 2, color: '#9099B3' },
+  row:           { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 },
+  rating:        { fontSize: 12, fontWeight: '700', color: colors.orange },
+  sub:           { fontSize: 11 },
+  btnVer:        { marginTop: 10, backgroundColor: colors.orange,
+                   borderRadius: 10, paddingVertical: 7, alignItems: 'center' },
+  btnVerText:    { fontSize: 12.5, fontWeight: '700', color: '#fff' },
 });

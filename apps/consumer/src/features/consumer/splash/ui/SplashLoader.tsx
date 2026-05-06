@@ -23,7 +23,7 @@ export function SplashLoader() {
 
   const width = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '55%'], // barra parcial como no protótipo
+    outputRange: ['0%', '55%'],
   });
 
   return (

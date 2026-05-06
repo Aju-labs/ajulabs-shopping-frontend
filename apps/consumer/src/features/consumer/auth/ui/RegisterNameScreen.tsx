@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '@ajulabs/theme';
 import { useAuthStore } from '../../../../store';
@@ -26,9 +27,8 @@ export function RegisterNameScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.content}>
-        {/* Emoji de boas-vindas */}
-        <View style={styles.emojiBox}>
-          <Text style={{ fontSize: 56 }}>👋</Text>
+        <View style={styles.iconBox}>
+          <Ionicons name="person-circle-outline" size={56} color={colors.orange} />
         </View>
 
         <Text style={styles.titulo}>Como podemos te chamar?</Text>
@@ -36,7 +36,6 @@ export function RegisterNameScreen() {
           Esse nome aparece nos seus pedidos e no chat com a Aju
         </Text>
 
-        {/* Input nome */}
         <TextInput
           style={styles.input}
           placeholder="Seu nome"
@@ -48,7 +47,6 @@ export function RegisterNameScreen() {
           maxLength={50}
         />
 
-        {/* CTA */}
         <TouchableOpacity
           style={[styles.btn, !valido && styles.btnDisabled]}
           onPress={handleContinuar}
@@ -66,7 +64,7 @@ const styles = StyleSheet.create({
   container:  { flex: 1, backgroundColor: '#FAFBFE' },
   content:    { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
 
-  emojiBox:   { alignItems: 'center', marginBottom: 24 },
+  iconBox:    { alignItems: 'center', marginBottom: 24 },
 
   titulo:     { fontSize: 22, fontWeight: '700', color: colors.navy, marginBottom: 6 },
   descricao:  { fontSize: 13, color: colors.n600, lineHeight: 18, marginBottom: 24 },

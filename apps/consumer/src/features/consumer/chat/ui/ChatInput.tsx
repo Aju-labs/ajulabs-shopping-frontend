@@ -1,5 +1,3 @@
-// src/features/consumer/chat/ui/ChatInput.tsx
-
 import { useState, useEffect, useRef } from 'react';
 import {
   View,

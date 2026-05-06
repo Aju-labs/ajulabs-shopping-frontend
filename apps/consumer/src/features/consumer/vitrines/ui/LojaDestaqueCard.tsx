@@ -1,6 +1,6 @@
-// src/features/consumer/vitrines/ui/LojaDestaqueCard.tsx
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Loja } from '@ajulabs/types';
 import { colors } from '@ajulabs/theme';
 
@@ -41,7 +41,8 @@ export function LojaDestaqueCard({ loja, width, onPress, dark = false }: LojaDes
         )}
         <View style={styles.imgOverlay} />
         <View style={styles.badgeDestaque}>
-          <Text style={styles.badgeDestaqueText}>⭐ Destaque</Text>
+          <Ionicons name="star" size={10} color={colors.n0} />
+          <Text style={styles.badgeDestaqueText}>Destaque</Text>
         </View>
       </View>
 
@@ -53,7 +54,8 @@ export function LojaDestaqueCard({ loja, width, onPress, dark = false }: LojaDes
           {loja.descricao}
         </Text>
         <View style={styles.row}>
-          <Text style={styles.rating}>★ {loja.avaliacao.toFixed(1)}</Text>
+          <Ionicons name="star" size={12} color={colors.orange} />
+          <Text style={styles.ratingTxt}>{loja.avaliacao.toFixed(1)}</Text>
           <Text style={[styles.totalAval, { color: subColor }]}>
             ({loja.totalAvaliacoes})
           </Text>
@@ -68,24 +70,25 @@ export function LojaDestaqueCard({ loja, width, onPress, dark = false }: LojaDes
 }
 
 const styles = StyleSheet.create({
-  card:            { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
-  imgWrapper:      { width: '100%', height: 130, position: 'relative' },
-  img:             { width: '100%', height: '100%' },
-  imgFallback:     { backgroundColor: colors.orange100,
-                     alignItems: 'center', justifyContent: 'center' },
-  imgFallbackText: { fontSize: 48, fontWeight: '700', color: colors.orange600 },
-  imgOverlay:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                     backgroundColor: 'rgba(0,9,51,0.15)' },
-  badgeDestaque:   { position: 'absolute', top: 10, left: 10,
-                     backgroundColor: colors.orange,
-                     paddingHorizontal: 9, paddingVertical: 4, borderRadius: 99 },
+  card:              { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  imgWrapper:        { width: '100%', height: 130, position: 'relative' },
+  img:               { width: '100%', height: '100%' },
+  imgFallback:       { backgroundColor: colors.orange100,
+                       alignItems: 'center', justifyContent: 'center' },
+  imgFallbackText:   { fontSize: 48, fontWeight: '700', color: colors.orange600 },
+  imgOverlay:        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                       backgroundColor: 'rgba(0,9,51,0.15)' },
+  badgeDestaque:     { position: 'absolute', top: 10, left: 10, flexDirection: 'row',
+                       alignItems: 'center', gap: 4,
+                       backgroundColor: colors.orange,
+                       paddingHorizontal: 9, paddingVertical: 4, borderRadius: 99 },
   badgeDestaqueText: { color: colors.n0, fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
-  info:            { padding: 12 },
-  nome:            { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  descricao:       { fontSize: 11.5, marginTop: 3, lineHeight: 15 },
-  row:             { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
-  rating:          { fontSize: 12.5, fontWeight: '700', color: colors.orange },
-  totalAval:       { fontSize: 11 },
-  sep:             { fontSize: 11, marginHorizontal: 2 },
-  tempo:           { fontSize: 11, fontWeight: '500' },
+  info:              { padding: 12 },
+  nome:              { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  descricao:         { fontSize: 11.5, marginTop: 3, lineHeight: 15 },
+  row:               { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
+  ratingTxt:         { fontSize: 12.5, fontWeight: '700', color: colors.orange },
+  totalAval:         { fontSize: 11 },
+  sep:               { fontSize: 11, marginHorizontal: 2 },
+  tempo:             { fontSize: 11, fontWeight: '500' },
 });

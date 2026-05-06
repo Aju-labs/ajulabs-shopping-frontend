@@ -1,11 +1,9 @@
-// src/features/consumer/chat/ui/ChatMsg.tsx
-
 import { useRef, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { MensagemChat } from '@ajulabs/types';
 import {
   View,
   Text,
-  ScrollView,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -36,7 +34,6 @@ export function ChatMsg({ mensagens, sugestoes, onSugestao, carregando }: Props)
           marginBottom: 12,
         }}
       >
-        {/* Balão de texto */}
         <View
           style={{
             alignSelf: isAju ? 'flex-start' : 'flex-end',
@@ -59,7 +56,6 @@ export function ChatMsg({ mensagens, sugestoes, onSugestao, carregando }: Props)
           </Text>
         </View>
 
-        {/* Cards de produto */}
         {msg.resposta?.produtos && (
           <FlatList
             horizontal
@@ -86,26 +82,28 @@ export function ChatMsg({ mensagens, sugestoes, onSugestao, carregando }: Props)
                   shadowRadius: 4,
                 }}
               >
-                {/* Imagem */}
                 <View style={{
                   height: 100,
                   backgroundColor: '#f3f4f6',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Text style={{ fontSize: 28 }}>🛍️</Text>
+                  <Ionicons name="bag-outline" size={28} color="#9ca3af" />
                   <View style={{
                     position: 'absolute', bottom: 6, left: 6,
                     backgroundColor: '#000000aa',
                     borderRadius: 6,
                     paddingHorizontal: 6,
                     paddingVertical: 2,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 3,
                   }}>
-                    <Text style={{ fontSize: 10, color: '#fff' }}>🛵 {produto.tempoEntrega}</Text>
+                    <Ionicons name="time-outline" size={10} color="#fff" />
+                    <Text style={{ fontSize: 10, color: '#fff' }}>{produto.tempoEntrega}</Text>
                   </View>
                 </View>
 
-                {/* Info */}
                 <View style={{ padding: 10 }}>
                   <Text
                     style={{ fontWeight: '600', fontSize: 13, color: '#111827', lineHeight: 17 }}
@@ -144,7 +142,6 @@ export function ChatMsg({ mensagens, sugestoes, onSugestao, carregando }: Props)
           />
         )}
 
-        {/* Chips inline */}
         {msg.resposta?.sugestoes && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, paddingHorizontal: 4 }}>
             {msg.resposta.sugestoes.map((s) => (
