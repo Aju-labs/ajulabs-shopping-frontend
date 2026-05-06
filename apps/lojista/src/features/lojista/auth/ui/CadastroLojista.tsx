@@ -73,18 +73,6 @@ function Field({
   );
 }
 
-// ─── Botão Google (ícone SVG simplificado) ────────────────────
-function GoogleButton({ onPress }: { onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.googleBtn} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.googleIconWrap}>
-        <Text style={styles.googleIconText}>G</Text>
-      </View>
-      <Text style={styles.googleBtnText}>Continuar com Google</Text>
-    </TouchableOpacity>
-  );
-}
-
 // ─── Tela principal ───────────────────────────────────────────
 export function CadastroLojista({ onCadastroSuccess }: CadastroLojistaProps) {
   const router = useRouter();
@@ -100,11 +88,6 @@ export function CadastroLojista({ onCadastroSuccess }: CadastroLojistaProps) {
 
   const updateForm = useCallback((key: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleGoogleSignUp = useCallback(() => {
-    // TODO: implementar OAuth Google
-    Alert.alert('Em breve', 'Cadastro com Google será disponibilizado em breve.');
   }, []);
 
   const validateForm = useCallback((): string | null => {
@@ -158,16 +141,6 @@ export function CadastroLojista({ onCadastroSuccess }: CadastroLojistaProps) {
       >
         <Text style={styles.cardTitle}>Criar conta</Text>
         <Text style={styles.cardSub}>Preencha os dados da sua loja para começar</Text>
-
-        {/* Google */}
-        <GoogleButton onPress={handleGoogleSignUp} />
-
-        {/* Divisor */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>ou cadastre com email</Text>
-          <View style={styles.dividerLine} />
-        </View>
 
         {/* Campos */}
         <Field
@@ -268,22 +241,6 @@ const styles = StyleSheet.create({
   cardContent:        { padding: 28, paddingBottom: 0 },
   cardTitle:          { fontSize: 20, fontWeight: '700', color: colors.navy },
   cardSub:            { fontSize: 13, color: colors.n600, marginTop: 4, marginBottom: 20 },
-
-  // Google
-  googleBtn:          { height: 48, borderRadius: 12, borderWidth: 1.5,
-                        borderColor: colors.n200, flexDirection: 'row',
-                        alignItems: 'center', justifyContent: 'center',
-                        gap: 10, marginBottom: 16 },
-  googleIconWrap:     { width: 24, height: 24, borderRadius: 12,
-                        backgroundColor: '#4285F4',
-                        alignItems: 'center', justifyContent: 'center' },
-  googleIconText:     { fontSize: 13, fontWeight: '800', color: '#fff' },
-  googleBtnText:      { fontSize: 14, fontWeight: '600', color: colors.navy },
-
-  // Divisor
-  divider:            { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
-  dividerLine:        { flex: 1, height: 1, backgroundColor: colors.n200 },
-  dividerText:        { fontSize: 12, color: colors.n600, fontWeight: '500' },
 
   // Campos
   field:              { marginBottom: 12 },
