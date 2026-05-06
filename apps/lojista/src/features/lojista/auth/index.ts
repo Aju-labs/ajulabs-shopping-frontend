@@ -1,0 +1,1 @@
+export { CadastroLojista, LoginLojista } from './ui';

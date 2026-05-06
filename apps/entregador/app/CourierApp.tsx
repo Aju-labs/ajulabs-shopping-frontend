@@ -6,6 +6,7 @@ import { ActiveScreen } from '../src/features/entregador/corrida-ativa';
 import { EarningsScreen } from '../src/features/entregador/ganhos';
 import { ProfileScreen } from '../src/features/entregador/perfil';
 import { OnboardingScreen } from '../src/features/entregador/onboarding';
+import { useAuthEntregadorStore } from '../src/store';
 
 interface ActiveRide {
   id: string;
@@ -123,7 +124,9 @@ function ApprovalScreen({ onContinue }: { onContinue: () => void }) {
 }
 
 export function CourierApp() {
-  const [screen, setScreen] = useState<Screen>('onboarding');
+  const needsOnboarding = useAuthEntregadorStore(s => s.needsOnboarding);
+  const logout = useAuthEntregadorStore(s => s.logout);
+  const [screen, setScreen] = useState<Screen>(needsOnboarding ? 'onboarding' : 'main');
   const [tab, setTab] = useState<Tab>('home');
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
 
@@ -131,7 +134,7 @@ export function CourierApp() {
     return (
       <OnboardingScreen
         onDone={(r) => {
-          if (r === 'cancel') setScreen('onboarding');
+          if (r === 'cancel') logout();
           else setScreen('approval');
         }}
       />
@@ -167,7 +170,7 @@ export function CourierApp() {
           />
         )}
         {tab === 'ganhos' && <EarningsScreen />}
-        {tab === 'perfil' && <ProfileScreen onLogout={() => setScreen('onboarding')} />}
+        {tab === 'perfil' && <ProfileScreen onLogout={logout} />}
       </View>
       <CourierNav tab={tab} onChange={setTab} />
     </View>

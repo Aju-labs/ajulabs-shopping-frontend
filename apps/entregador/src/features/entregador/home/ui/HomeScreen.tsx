@@ -32,6 +32,7 @@ const LIVE_RIDE = {
   ganho: 18.9,
   distancia: 3.2,
   duracao: 18,
+  codigo: '4821',
 };
 
 const brl = (v: number) =>

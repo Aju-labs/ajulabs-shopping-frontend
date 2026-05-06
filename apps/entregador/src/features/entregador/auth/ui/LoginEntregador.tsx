@@ -4,6 +4,7 @@ import {
   ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@ajulabs/theme';
 import { useAuthEntregadorStore } from '../../../../store';
 import { formatCPF } from '../lib/formatCPF';
@@ -16,6 +17,7 @@ interface LoginEntregadorProps {
 export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
   const router = useRouter();
   const login = useAuthEntregadorStore(s => s.login);
+  const register = useAuthEntregadorStore(s => s.register);
   const [cpf, setCpf]       = useState('');
   const [senha, setSenha]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,7 +46,7 @@ export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
     <View style={styles.container}>
       <View style={styles.top}>
         <View style={styles.logoWrap}>
-          <Text style={styles.logoText}>🛵</Text>
+          <Ionicons name="bicycle" size={28} color="#FFFFFF" />
         </View>
         <Text style={styles.topTitle}>AjuLabs Entregador</Text>
         <Text style={styles.topSub}>Entregue com agilidade em Aracaju.</Text>
@@ -90,7 +92,10 @@ export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
 
         <View style={styles.registerRow}>
           <Text style={styles.registerText}>Primeira vez? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')} activeOpacity={0.8}>
+          <TouchableOpacity
+            onPress={() => { register(); router.replace('/'); }}
+            activeOpacity={0.8}
+          >
             <Text style={styles.registerLink}>Criar conta</Text>
           </TouchableOpacity>
         </View>
@@ -111,7 +116,6 @@ const styles = StyleSheet.create({
   top:           { paddingTop: 52, paddingBottom: 28, paddingHorizontal: 24, alignItems: 'center' },
   logoWrap:      { width: 52, height: 52, borderRadius: 14, backgroundColor: colors.orange,
                    alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  logoText:      { fontSize: 28 },
   topTitle:      { fontSize: 26, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   topSub:        { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 6 },
 
