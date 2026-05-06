@@ -37,7 +37,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#F6F7FB" />
 
-      {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} style={s.backBtn}>
           <Ionicons name="chevron-back" size={20} color="#000933" />
@@ -53,7 +52,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
 
       <ScrollView style={s.scroll} contentContainerStyle={{ paddingBottom: 100 }}>
 
-        {/* Status banner */}
         <View style={[s.statusBanner, { backgroundColor: meta.bg }]}>
           <View style={[s.statusIcon, { backgroundColor: meta.color }]}>
             <Ionicons name={statusIcon[order.status]} size={22} color="#fff" />
@@ -64,7 +62,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
           </View>
         </View>
 
-        {/* Cliente */}
         <Text style={s.sectionLabel}>Cliente</Text>
         <View style={s.card}>
           <View style={s.clientRow}>
@@ -88,7 +85,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
           </View>
         </View>
 
-        {/* Itens */}
         <Text style={s.sectionLabel}>Itens do pedido</Text>
         <View style={s.card}>
           {order.itens.map((it, i) => (
@@ -105,7 +101,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
           ))}
         </View>
 
-        {/* Observação */}
         {order.obs && (
           <View style={s.obsCard}>
             <Ionicons name="sparkles" size={18} color="#B34D00" />
@@ -116,7 +111,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
           </View>
         )}
 
-        {/* Resumo */}
         <View style={[s.card, { marginTop: 16 }]}>
           <View style={s.summaryRow}>
             <Text style={s.summaryLabel}>Subtotal</Text>
@@ -142,7 +136,6 @@ export function OrderDetail({ order, onBack, onAdvance, onDispatch }: Props) {
         </View>
       </ScrollView>
 
-      {/* Botão fixo */}
       {meta.next && (
         <View style={s.stickyBtn}>
           <TouchableOpacity

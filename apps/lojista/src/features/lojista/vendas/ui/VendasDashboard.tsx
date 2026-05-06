@@ -1,12 +1,10 @@
-// src/features/lojista/vendas/ui/VendasDashboard.tsx
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView,
+  View, Text, ScrollView,
   StyleSheet, Pressable,
 } from 'react-native';
 import { colors } from '../../../../theme';
 
-// ─── Tipos ────────────────────────────────────────────────────
 type Period = 'dia' | 'semana' | 'mes';
 
 interface PeriodData {
@@ -33,7 +31,6 @@ interface VendasDashboardProps {
   nomeLoja?: string;
 }
 
-// ─── Dados mock ───────────────────────────────────────────────
 const PERIOD_DATA: Record<Period, PeriodData> = {
   dia: {
     label: 'VENDAS · HOJE',
@@ -78,7 +75,6 @@ const INSIGHTS: InsightItem[] = [
   { rank: 3, nome: 'Bota coturno feminina',   buscas: 64,  pct: '+18%' },
 ];
 
-// ─── Gráfico de barras customizado ───────────────────────────
 function BarChart({ bars }: { bars: number[] }) {
   const max = Math.max(...bars, 1);
   return (
@@ -109,11 +105,10 @@ function BarChart({ bars }: { bars: number[] }) {
   );
 }
 
-// ─── Card de métrica ──────────────────────────────────────────
 function MetricCard({
-  icon, label, value, trend, dark,
+  label, value, trend, dark,
 }: {
-  icon: string; label: string; value: string; trend: string; dark: boolean;
+  label: string; value: string; trend: string; dark: boolean;
 }) {
   const textColor = dark ? colors.n0    : colors.navy;
   const subColor  = dark ? 'rgba(255,255,255,0.6)' : colors.n600;
@@ -122,19 +117,13 @@ function MetricCard({
 
   return (
     <View style={[styles.metricCard, { backgroundColor: surface, borderColor: border }]}>
-      <View style={styles.metricHeader}>
-        <View style={styles.metricIcon}>
-          <Text style={{ fontSize: 14 }}>{icon}</Text>
-        </View>
-        <Text style={styles.metricTrend}>{trend}</Text>
-      </View>
+      <Text style={styles.metricTrend}>{trend}</Text>
       <Text style={[styles.metricLabel, { color: subColor }]}>{label}</Text>
       <Text style={[styles.metricValue, { color: textColor }]}>{value}</Text>
     </View>
   );
 }
 
-// ─── Tela principal ───────────────────────────────────────────
 export function VendasDashboard({
   dark = false,
   nomeLoja = 'Loja do Chico — Calçados',
@@ -156,7 +145,6 @@ export function VendasDashboard({
 
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: surface, borderBottomColor: border }]}>
         <Text style={[styles.headerTitle, { color: textColor }]}>Dashboard</Text>
         <Text style={[styles.headerSub, { color: subColor }]}>{nomeLoja}</Text>
@@ -164,7 +152,6 @@ export function VendasDashboard({
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-        {/* Abas de período */}
         <View style={[styles.periodTabs, { backgroundColor: surface, borderColor: border }]}>
           {PERIODS.map(p => (
             <Pressable
@@ -185,7 +172,6 @@ export function VendasDashboard({
           ))}
         </View>
 
-        {/* Hero card */}
         <View style={styles.heroCard}>
           <View style={styles.heroDeco}>
             <Text style={styles.heroDecoText}>$</Text>
@@ -195,17 +181,14 @@ export function VendasDashboard({
           <Text style={styles.heroTrend}>↑ {data.trend}</Text>
         </View>
 
-        {/* Métricas */}
         <View style={styles.metricsGrid}>
           <MetricCard
-            icon="📋"
             label="PEDIDOS"
             value={data.pedidos}
             trend={data.pedidosTrend}
             dark={dark}
           />
           <MetricCard
-            icon="💰"
             label="TICKET MÉDIO"
             value={data.ticket}
             trend={data.ticketTrend}
@@ -213,13 +196,11 @@ export function VendasDashboard({
           />
         </View>
 
-        {/* Produto mais vendido */}
         <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
           <Text style={[styles.cardLabel, { color: subColor }]}>PRODUTO MAIS VENDIDO</Text>
           <Text style={[styles.cardValue, { color: textColor }]}>{data.topProduto}</Text>
         </View>
 
-        {/* Gráfico de barras */}
         <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
           <View style={styles.chartHeader}>
             <Text style={[styles.chartTitle, { color: textColor }]}>Vendas · últimos 7 dias</Text>
@@ -228,10 +209,9 @@ export function VendasDashboard({
           <BarChart bars={data.bars} />
         </View>
 
-        {/* Insight IA */}
         <View style={styles.insightCard}>
           <View style={styles.insightBadge}>
-            <Text style={styles.insightBadgeText}>✨ Insight IA</Text>
+            <Text style={styles.insightBadgeText}>Insight IA</Text>
           </View>
           <Text style={styles.insightTitle}>
             O que seus clientes buscam que você não tem
@@ -265,7 +245,6 @@ export function VendasDashboard({
   );
 }
 
-// ─── Estilos do gráfico ───────────────────────────────────────
 const chartStyles = StyleSheet.create({
   container:   { height: 130 },
   barsRow:     { flexDirection: 'row', alignItems: 'flex-end', height: '100%', gap: 4 },
@@ -275,26 +254,17 @@ const chartStyles = StyleSheet.create({
   barLabel:    { fontSize: 10, color: '#6B7390', fontWeight: '500', marginTop: 4 },
 });
 
-// ─── Estilos principais ───────────────────────────────────────
 const styles = StyleSheet.create({
   container:        { flex: 1 },
-
-  // Header
   header:           { padding: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerTitle:      { fontWeight: '700', fontSize: 20, letterSpacing: -0.4 },
   headerSub:        { fontSize: 12, marginTop: 2 },
-
-  // Content
   content:          { padding: 14, gap: 12 },
-
-  // Period tabs
   periodTabs:       { flexDirection: 'row', borderRadius: 12, borderWidth: 1,
                       padding: 4, gap: 4 },
   periodTab:        { flex: 1, paddingVertical: 8, borderRadius: 8,
                       alignItems: 'center' },
   periodTabText:    { fontSize: 13, fontWeight: '600' },
-
-  // Hero
   heroCard:         { backgroundColor: colors.orange, borderRadius: 16,
                       padding: 18, overflow: 'hidden', position: 'relative' },
   heroDeco:         { position: 'absolute', right: -10, top: '50%',
@@ -305,33 +275,20 @@ const styles = StyleSheet.create({
   heroValue:        { fontSize: 36, fontWeight: '700', color: '#fff',
                       letterSpacing: -1, marginTop: 4 },
   heroTrend:        { fontSize: 12, color: 'rgba(255,255,255,0.9)', marginTop: 6 },
-
-  // Metrics grid
   metricsGrid:      { flexDirection: 'row', gap: 10 },
   metricCard:       { flex: 1, borderRadius: 14, borderWidth: 1, padding: 14 },
-  metricHeader:     { flexDirection: 'row', justifyContent: 'space-between',
-                      alignItems: 'center', marginBottom: 8 },
-  metricIcon:       { width: 30, height: 30, borderRadius: 8,
-                      backgroundColor: colors.orange100,
-                      alignItems: 'center', justifyContent: 'center' },
-  metricTrend:      { fontSize: 11, fontWeight: '600', color: '#046C2E' },
+  metricTrend:      { fontSize: 11, fontWeight: '600', color: '#046C2E', marginBottom: 6 },
   metricLabel:      { fontSize: 11, fontWeight: '600',
                       textTransform: 'uppercase', letterSpacing: 0.4 },
   metricValue:      { fontSize: 22, fontWeight: '700', marginTop: 2 },
-
-  // Card genérico
   card:             { borderRadius: 14, borderWidth: 1, padding: 14 },
   cardLabel:        { fontSize: 11, fontWeight: '600',
                       textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 },
   cardValue:        { fontSize: 17, fontWeight: '700' },
-
-  // Chart
   chartHeader:      { flexDirection: 'row', justifyContent: 'space-between',
                       alignItems: 'baseline', marginBottom: 14 },
   chartTitle:       { fontSize: 15, fontWeight: '600' },
   chartUnit:        { fontSize: 11 },
-
-  // Insight
   insightCard:      { backgroundColor: colors.navy, borderRadius: 16, padding: 16 },
   insightBadge:     { alignSelf: 'flex-start', backgroundColor: 'rgba(242,118,15,0.25)',
                       paddingHorizontal: 10, paddingVertical: 4,

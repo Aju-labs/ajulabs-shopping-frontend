@@ -80,7 +80,6 @@ export function LogisticaScreen() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#F6F7FB" />
 
-      {/* Header */}
       <View style={s.header}>
         <Text style={s.headerTitle}>Logística</Text>
         <View style={s.headerStats}>
@@ -97,7 +96,6 @@ export function LogisticaScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
 
-        {/* Em andamento */}
         <Text style={s.sectionLabel}>Em andamento</Text>
         {emAndamento.map(e => {
           const expanded = expandedId === e.id;
@@ -130,7 +128,6 @@ export function LogisticaScreen() {
                   </View>
                 </View>
 
-                {/* Motoboy */}
                 <View style={s.motoboyRow}>
                   <View style={s.motoboyAvatar}>
                     <Text style={s.motoboyInitials}>
@@ -147,7 +144,6 @@ export function LogisticaScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Mapa expansível */}
               {expanded && (
                 <View style={s.mapContainer}>
                   {Platform.OS !== 'web' ? (
@@ -193,7 +189,6 @@ export function LogisticaScreen() {
                     </View>
                   )}
 
-                  {/* Legenda */}
                   <View style={s.mapLegend}>
                     <View style={s.legendItem}>
                       <View style={[s.legendDot, { backgroundColor: '#000933' }]} />
@@ -214,7 +209,6 @@ export function LogisticaScreen() {
           );
         })}
 
-        {/* Concluídas */}
         <Text style={[s.sectionLabel, { marginTop: 8 }]}>Concluídas hoje</Text>
         {concluidas.map(e => (
           <View key={e.id} style={[s.card, s.cardConcluida]}>

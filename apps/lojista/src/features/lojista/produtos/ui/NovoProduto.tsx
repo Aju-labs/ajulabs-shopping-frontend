@@ -1,13 +1,12 @@
-// src/features/lojista/produtos/ui/NovoProduto.tsx
 import { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../theme';
 
-// ─── Tipos ────────────────────────────────────────────────────
 type Stage = 'capture' | 'analyzing' | 'edit';
 
 interface ProductData {
@@ -25,7 +24,6 @@ interface NovoProdutoProps {
   onPublicar?: (data: ProductData) => void;
 }
 
-// ─── Stepper ──────────────────────────────────────────────────
 const STEPS = ['Foto', 'IA analisa', 'Revisar', 'Publicar'];
 
 function Stepper({ current }: { current: number }) {
@@ -73,7 +71,6 @@ function Stepper({ current }: { current: number }) {
   );
 }
 
-// ─── Stage 1: Captura ─────────────────────────────────────────
 function CaptureStage({ onCapture }: { onCapture: (uri: string) => void }) {
   const handleCamera = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -102,12 +99,11 @@ function CaptureStage({ onCapture }: { onCapture: (uri: string) => void }) {
 
   return (
     <View style={styles.content}>
-      {/* Card IA */}
       <View style={styles.iaCard}>
         <View style={styles.iaDecoCircle} />
         <View style={styles.iaDecoCircle2} />
         <View style={styles.iaBadge}>
-          <Text style={styles.iaBadgeText}>✨ Cadastro com IA</Text>
+          <Text style={styles.iaBadgeText}>Cadastro com IA</Text>
         </View>
         <Text style={styles.iaTitle}>{'Tire uma foto.\nA IA faz o resto.'}</Text>
         <Text style={styles.iaDesc}>
@@ -115,10 +111,9 @@ function CaptureStage({ onCapture }: { onCapture: (uri: string) => void }) {
         </Text>
       </View>
 
-      {/* Área de foto */}
       <TouchableOpacity style={styles.photoArea} onPress={handleCamera} activeOpacity={0.85}>
         <View style={styles.photoIcon}>
-          <Text style={{ fontSize: 28 }}>📷</Text>
+          <Ionicons name="camera-outline" size={28} color="#F2760F" />
         </View>
         <Text style={styles.photoTitle}>Tirar foto do produto</Text>
         <Text style={styles.photoSub}>ou toque para escolher da galeria</Text>
@@ -128,7 +123,6 @@ function CaptureStage({ onCapture }: { onCapture: (uri: string) => void }) {
         <Text style={styles.galleryBtnText}>Escolher da galeria</Text>
       </TouchableOpacity>
 
-      {/* O que a IA vai fazer */}
       <Text style={styles.sectionLabel}>O que a IA vai preencher</Text>
       <View style={styles.stagesList}>
         {[
@@ -148,7 +142,6 @@ function CaptureStage({ onCapture }: { onCapture: (uri: string) => void }) {
   );
 }
 
-// ─── Stage 2: Analisando ──────────────────────────────────────
 function AnalyzingStage() {
   return (
     <View style={[styles.content, styles.analyzingContainer]}>
@@ -171,7 +164,6 @@ function AnalyzingStage() {
   );
 }
 
-// ─── Stage 3: Editar ──────────────────────────────────────────
 function EditStage({
   data, onChange, onPublicar,
 }: {
@@ -193,12 +185,10 @@ function EditStage({
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.editContent}>
-      {/* Badge IA */}
       <View style={styles.iaBadgeSmall}>
-        <Text style={styles.iaBadgeSmallText}>✨ Preenchido pela Aju IA — revise e publique</Text>
+        <Text style={styles.iaBadgeSmallText}>Preenchido pela Aju IA — revise e publique</Text>
       </View>
 
-      {/* Nome */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Nome do produto</Text>
         <TextInput
@@ -209,7 +199,6 @@ function EditStage({
         />
       </View>
 
-      {/* Categoria */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Categoria</Text>
         <TextInput
@@ -220,7 +209,6 @@ function EditStage({
         />
       </View>
 
-      {/* Descrição */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Descrição</Text>
         <TextInput
@@ -233,7 +221,6 @@ function EditStage({
         />
       </View>
 
-      {/* Tags */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Tags sugeridas</Text>
         <View style={styles.tagsWrap}>
@@ -262,7 +249,6 @@ function EditStage({
         </View>
       </View>
 
-      {/* Preço e Estoque */}
       <View style={styles.rowFields}>
         <View style={[styles.fieldGroup, { flex: 1 }]}>
           <Text style={styles.fieldLabel}>Preço (R$)</Text>
@@ -286,7 +272,6 @@ function EditStage({
         </View>
       </View>
 
-      {/* Variações */}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Variações (tamanhos)</Text>
         <View style={styles.variacoesWrap}>
@@ -314,7 +299,6 @@ function EditStage({
         </View>
       </View>
 
-      {/* Botão publicar */}
       <TouchableOpacity style={styles.publishBtn} onPress={onPublicar} activeOpacity={0.85}>
         <Text style={styles.publishBtnText}>Publicar produto</Text>
       </TouchableOpacity>
@@ -324,7 +308,6 @@ function EditStage({
   );
 }
 
-// ─── Tela principal ───────────────────────────────────────────
 export function NovoProduto({ dark = false, onPublicar }: NovoProdutoProps) {
   const [stage, setStage] = useState<Stage>('capture');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -349,8 +332,7 @@ export function NovoProduto({ dark = false, onPublicar }: NovoProdutoProps) {
   const handleCapture = useCallback((uri: string) => {
     setImageUri(uri);
     setStage('analyzing');
-
-    // Simula análise da IA (substituir por chamada real à API)
+    // TODO: substituir por chamada real à API de análise de imagem
     setTimeout(() => {
       setProductData({
         nome: 'Tênis Casual Branco — Napa',
@@ -383,7 +365,6 @@ export function NovoProduto({ dark = false, onPublicar }: NovoProdutoProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: surface, borderBottomColor: border }]}>
         <View style={styles.headerInfo}>
           <Text style={[styles.headerTitle, { color: textColor }]}>Adicionar produto</Text>
@@ -391,12 +372,10 @@ export function NovoProduto({ dark = false, onPublicar }: NovoProdutoProps) {
         </View>
       </View>
 
-      {/* Stepper */}
       <View style={[styles.stepperWrapper, { backgroundColor: surface, borderBottomColor: border }]}>
         <Stepper current={stepIndex} />
       </View>
 
-      {/* Conteúdo por stage */}
       {stage === 'capture' && (
         <ScrollView showsVerticalScrollIndicator={false}>
           <CaptureStage onCapture={handleCapture} />
@@ -416,14 +395,10 @@ export function NovoProduto({ dark = false, onPublicar }: NovoProdutoProps) {
 
 const styles = StyleSheet.create({
   container:          { flex: 1 },
-
-  // Header
   header:             { padding: 14, paddingHorizontal: 16, borderBottomWidth: 1 },
   headerInfo:         { flex: 1 },
   headerTitle:        { fontWeight: '600', fontSize: 17, letterSpacing: -0.3 },
   headerSub:          { fontSize: 12, color: '#6B7390', marginTop: 1 },
-
-  // Stepper
   stepperWrapper:     { paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
   stepperRow:         { flexDirection: 'row', alignItems: 'flex-start' },
   stepItem:           { flex: 1, alignItems: 'center' },
@@ -433,11 +408,7 @@ const styles = StyleSheet.create({
                         alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   stepNum:            { fontSize: 12, fontWeight: '700' },
   stepLabel:          { fontSize: 10, marginTop: 4, textAlign: 'center', fontWeight: '500' },
-
-  // Content
   content:            { padding: 16, gap: 14 },
-
-  // IA Card
   iaCard:             { backgroundColor: '#000933', borderRadius: 18, padding: 18,
                         overflow: 'hidden', position: 'relative' },
   iaDecoCircle:       { position: 'absolute', top: -20, right: -20, width: 100, height: 100,
@@ -451,8 +422,6 @@ const styles = StyleSheet.create({
                         lineHeight: 28, letterSpacing: -0.4 },
   iaDesc:             { fontSize: 13, color: 'rgba(255,255,255,0.65)',
                         marginTop: 8, lineHeight: 19 },
-
-  // Foto
   photoArea:          { borderWidth: 2, borderColor: '#F2760F', borderStyle: 'dashed',
                         borderRadius: 18, backgroundColor: '#fff',
                         paddingVertical: 36, paddingHorizontal: 20,
@@ -465,8 +434,6 @@ const styles = StyleSheet.create({
   galleryBtn:         { height: 44, borderRadius: 12, borderWidth: 1.5,
                         borderColor: '#E4E7F1', alignItems: 'center', justifyContent: 'center' },
   galleryBtnText:     { fontSize: 14, fontWeight: '600', color: '#6B7390' },
-
-  // O que a IA faz
   sectionLabel:       { fontSize: 11, fontWeight: '600', color: '#6B7390',
                         textTransform: 'uppercase', letterSpacing: 0.5 },
   stagesList:         { gap: 8 },
@@ -476,8 +443,6 @@ const styles = StyleSheet.create({
                         borderWidth: 1, borderColor: '#E4E7F1' },
   stageDot:           { width: 8, height: 8, borderRadius: 4, backgroundColor: '#F2760F' },
   stageText:          { fontSize: 13, color: '#6B7390' },
-
-  // Analyzing
   analyzingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   analyzingCard:      { backgroundColor: '#fff', borderRadius: 20, padding: 24,
                         alignItems: 'center', gap: 14, width: '100%',
@@ -488,8 +453,6 @@ const styles = StyleSheet.create({
   analyzeStep:        { flexDirection: 'row', alignItems: 'center', gap: 8 },
   analyzeStepDot:     { width: 6, height: 6, borderRadius: 3 },
   analyzeStepText:    { fontSize: 13, color: '#6B7390' },
-
-  // Edit
   editContent:        { padding: 16, gap: 14 },
   iaBadgeSmall:       { backgroundColor: '#FFEAD4', paddingHorizontal: 12,
                         paddingVertical: 8, borderRadius: 12 },

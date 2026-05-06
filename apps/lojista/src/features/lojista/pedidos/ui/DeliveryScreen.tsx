@@ -36,7 +36,7 @@ export function DeliveryScreen({ order, onBack }: Props) {
         </View>
       </View>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: 32 }}>🛵</Text>
+        <Ionicons name="bicycle-outline" size={32} color="#000933" />
         <Text style={{ fontSize: 16, fontWeight: '600', color: '#000933', marginTop: 8 }}>Nenhum pedido para despachar</Text>
         <Text style={{ fontSize: 13, color: '#9099B3', marginTop: 4 }}>Pedidos prontos aparecerão aqui</Text>
       </View>
@@ -67,7 +67,6 @@ export function DeliveryScreen({ order, onBack }: Props) {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#F6F7FB" />
 
-      {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} style={s.backBtn}>
           <Ionicons name="chevron-back" size={20} color="#000933" />
@@ -90,7 +89,6 @@ export function DeliveryScreen({ order, onBack }: Props) {
           </View>
         ) : (
           <>
-            {/* Card do motoboy */}
             <View style={s.courierCard}>
               <View style={s.courierRow}>
                 <View style={s.courierAvatar}>
@@ -131,7 +129,6 @@ export function DeliveryScreen({ order, onBack }: Props) {
               </View>
             </View>
 
-            {/* Timeline de status */}
             <View style={s.timelineCard}>
               <Text style={s.timelineTitle}>Status</Text>
               {STEPS.map((step, i) => {
@@ -139,11 +136,9 @@ export function DeliveryScreen({ order, onBack }: Props) {
                 const active = i === stepIdx;
                 return (
                   <View key={step.id} style={s.stepRow}>
-                    {/* Linha conectora */}
                     {i < STEPS.length - 1 && (
                       <View style={[s.stepLine, { backgroundColor: i < stepIdx ? '#DE6708' : '#E4E7F1' }]} />
                     )}
-                    {/* Dot */}
                     <View style={[
                       s.stepDot,
                       done ? s.stepDotDone : s.stepDotPending,
@@ -152,11 +147,9 @@ export function DeliveryScreen({ order, onBack }: Props) {
                       {done && !active && <Ionicons name="checkmark" size={10} color="#fff" />}
                       {active && <View style={s.stepDotInner} />}
                     </View>
-                    {/* Label */}
                     <Text style={[s.stepLabel, done ? s.stepLabelDone : s.stepLabelPending]}>
                       {step.label}
                     </Text>
-                    {/* Badge "Agora" */}
                     {active && (
                       <View style={s.nowBadge}>
                         <Text style={s.nowBadgeText}>Agora</Text>
@@ -167,7 +160,6 @@ export function DeliveryScreen({ order, onBack }: Props) {
               })}
             </View>
 
-            {/* CTA */}
             <TouchableOpacity style={s.ctaBtn} onPress={handleCta} activeOpacity={0.85}>
               <Ionicons name="checkmark" size={16} color="#fff" />
               <Text style={s.ctaBtnText}>{ctaLabel}</Text>

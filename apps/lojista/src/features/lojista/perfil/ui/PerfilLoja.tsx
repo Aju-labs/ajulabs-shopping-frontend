@@ -1,13 +1,12 @@
-// src/features/lojista/perfil/ui/PerfilLoja.tsx
 import { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, Switch, Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../theme';
 
-// ─── Tipos ────────────────────────────────────────────────────
 interface HorarioDia {
   dia: string;
   abreviacao: string;
@@ -33,7 +32,6 @@ interface PerfilLojaProps {
   dark?: boolean;
 }
 
-// ─── Dados mock ───────────────────────────────────────────────
 const HORARIOS_INICIAIS: HorarioDia[] = [
   { dia: 'Segunda-feira',  abreviacao: 'Seg', ativo: true,  abertura: '08:00', fechamento: '18:00' },
   { dia: 'Terça-feira',   abreviacao: 'Ter', ativo: true,  abertura: '08:00', fechamento: '18:00' },
@@ -44,7 +42,6 @@ const HORARIOS_INICIAIS: HorarioDia[] = [
   { dia: 'Domingo',       abreviacao: 'Dom', ativo: false, abertura: '--:--', fechamento: '--:--' },
 ];
 
-// ─── Campo de formulário ──────────────────────────────────────
 function FormField({
   label, value, onChange, placeholder, multiline = false,
   keyboardType = 'default', dark,
@@ -79,7 +76,6 @@ function FormField({
   );
 }
 
-// ─── Linha de horário por dia ─────────────────────────────────
 function HorarioRow({
   horario, onChange, dark,
 }: {
@@ -134,7 +130,6 @@ function HorarioRow({
   );
 }
 
-// ─── Avatar com iniciais ──────────────────────────────────────
 function StoreAvatar({ nome, size = 56 }: { nome: string; size?: number }) {
   const initials = nome.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   return (
@@ -144,7 +139,6 @@ function StoreAvatar({ nome, size = 56 }: { nome: string; size?: number }) {
   );
 }
 
-// ─── Tela principal ───────────────────────────────────────────
 export function PerfilLoja({ dark = false }: PerfilLojaProps) {
   const [horarios, setHorarios] = useState<HorarioDia[]>(HORARIOS_INICIAIS);
   const [loja, setLoja] = useState<LojaData>({
@@ -201,10 +195,9 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
     Alert.alert('Salvo!', 'As informações da loja foram atualizadas.');
   }, [loja, horarios]);
 
-  // Verifica se a loja está aberta agora
   const hoje = new Date();
-  const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg...
-  const mapDia = [6, 0, 1, 2, 3, 4, 5]; // mapeia JS para nosso array
+  const diaSemana = hoje.getDay();
+  const mapDia = [6, 0, 1, 2, 3, 4, 5];
   const horarioHoje = horarios[mapDia[diaSemana]];
   const agoraMin = hoje.getHours() * 60 + hoje.getMinutes();
   const [aH, aM] = (horarioHoje?.abertura || '00:00').split(':').map(Number);
@@ -213,7 +206,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: surface, borderBottomColor: border }]}>
         <Text style={[styles.headerTitle, { color: textColor }]}>Perfil da loja</Text>
         <Text style={[styles.headerSub, { color: subColor }]}>Informações visíveis para os clientes</Text>
@@ -221,19 +213,16 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-        {/* ── Identidade visual ── */}
         <Text style={[styles.sectionLabel, { color: subColor }]}>IDENTIDADE VISUAL</Text>
         <View style={[styles.card, { borderColor: border }]}>
-          {/* Banner */}
           <View style={[styles.banner, { backgroundColor: colors.navy }]}>
             <TouchableOpacity style={styles.bannerEditBtn} onPress={handlePickBanner} activeOpacity={0.8}>
-              <Text style={{ fontSize: 12 }}>✏️</Text>
+              <Ionicons name="pencil" size={12} color="#fff" />
             </TouchableOpacity>
-            {/* Avatar sobre o banner */}
             <View style={styles.avatarWrap}>
               <StoreAvatar nome={loja.nome} size={58} />
               <TouchableOpacity style={styles.avatarEditBtn} onPress={handlePickAvatar} activeOpacity={0.8}>
-                <Text style={{ fontSize: 10 }}>📷</Text>
+                <Ionicons name="camera-outline" size={10} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -249,7 +238,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           </View>
         </View>
 
-        {/* ── Informações ── */}
         <Text style={[styles.sectionLabel, { color: subColor }]}>INFORMAÇÕES DA LOJA</Text>
         <View style={[styles.card, { borderColor: border, backgroundColor: surface }]}>
           <View style={styles.fieldGroup}>
@@ -260,7 +248,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           </View>
         </View>
 
-        {/* ── Endereço ── */}
         <Text style={[styles.sectionLabel, { color: subColor }]}>ENDEREÇO</Text>
         <View style={[styles.card, { borderColor: border, backgroundColor: surface }]}>
           <View style={styles.fieldGroup}>
@@ -277,7 +264,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           </View>
         </View>
 
-        {/* ── Horários ── */}
         <Text style={[styles.sectionLabel, { color: subColor }]}>HORÁRIO DE FUNCIONAMENTO</Text>
         <View style={[styles.card, { borderColor: border, backgroundColor: surface }]}>
           {horarios.map((horario, index) => (
@@ -291,7 +277,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           ))}
         </View>
 
-        {/* ── Agendamento ── */}
         <Text style={[styles.sectionLabel, { color: subColor }]}>AGENDAMENTO</Text>
         <View style={[styles.card, { borderColor: border, backgroundColor: surface }]}>
           <View style={styles.agendRow}>
@@ -321,7 +306,6 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           )}
         </View>
 
-        {/* Botão salvar */}
         <TouchableOpacity style={styles.saveBtn} onPress={handleSalvar} activeOpacity={0.85}>
           <Text style={styles.saveBtnText}>Salvar alterações</Text>
         </TouchableOpacity>
@@ -340,12 +324,8 @@ const styles = StyleSheet.create({
   content:          { padding: 14, gap: 8 },
   sectionLabel:     { fontSize: 11, fontWeight: '700', letterSpacing: 0.5,
                       marginTop: 6, marginBottom: 4, paddingHorizontal: 2 },
-
-  // Card
   card:             { borderRadius: 16, borderWidth: 1, overflow: 'hidden',
                       backgroundColor: '#fff' },
-
-  // Banner + Avatar
   banner:           { height: 90, position: 'relative' },
   bannerEditBtn:    { position: 'absolute', top: 8, right: 8, width: 28, height: 28,
                       borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.4)',
@@ -364,8 +344,6 @@ const styles = StyleSheet.create({
   statusRow:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   statusDot:        { width: 8, height: 8, borderRadius: 4 },
   statusText:       { fontSize: 12, fontWeight: '600' },
-
-  // Campos
   fieldGroup:       { padding: 14, gap: 12 },
   fieldRow:         { flexDirection: 'row', gap: 10 },
   field:            { gap: 5 },
@@ -373,8 +351,6 @@ const styles = StyleSheet.create({
                       textTransform: 'uppercase', letterSpacing: 0.4 },
   fieldInput:       { borderRadius: 10, borderWidth: 1,
                       paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
-
-  // Horários
   dayRow:           { flexDirection: 'row', alignItems: 'center',
                       paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
   dayName:          { fontSize: 13, fontWeight: '600', width: 32 },
@@ -382,8 +358,6 @@ const styles = StyleSheet.create({
                       paddingVertical: 6, paddingHorizontal: 8,
                       fontSize: 12, fontWeight: '600', textAlign: 'center' },
   timeSep:          { fontSize: 12 },
-
-  // Agendamento
   agendRow:         { flexDirection: 'row', alignItems: 'center',
                       justifyContent: 'space-between', padding: 14, gap: 12 },
   agendInfo:        { flex: 1 },
@@ -392,8 +366,6 @@ const styles = StyleSheet.create({
   antecedenciaInput:{ width: 80, borderRadius: 8, borderWidth: 1,
                       paddingVertical: 6, paddingHorizontal: 8,
                       fontSize: 13, fontWeight: '600', textAlign: 'center' },
-
-  // Salvar
   saveBtn:          { height: 50, borderRadius: 14, backgroundColor: colors.orange,
                       alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   saveBtnText:      { fontSize: 15, fontWeight: '700', color: '#fff' },

@@ -33,7 +33,7 @@ export const PEDIDOS_MOCK: Order[] = [
     id: '#SD-8841', status: 'novo', cliente: 'Mariana S.', distancia: '2,1 km',
     endereco: 'R. Laranjeiras, 412 · Apto 302\nAtalaia, Aracaju · deixar na portaria',
     hora: '14:32', total: 229.70,
-    obs: 'Embrulhar para presente, por favor 🎁',
+    obs: 'Embrulhar para presente, por favor',
     itens: [
       { nome: 'Tênis Runner Preto — 41', qtd: 1, preco: 189.90 },
       { nome: 'Meia cano alto', qtd: 2, preco: 19.90 },
