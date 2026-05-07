@@ -1,0 +1,452 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ========================================
+// 1. AUTENTICAÇÃO & IDENTIDADE
+// ========================================
+
+model Usuario {
+  id                  String   @id @default(uuid())
+  nome                String
+  cpf                 String   @unique
+  telefone            String   @unique
+  email               String   @unique
+  senhaHash           String   @map("senha_hash")
+  avatarUrl           String?  @map("avatar_url")
+  telefoneVerificado  Boolean  @default(false) @map("telefone_verificado")
+  criadoEm            DateTime @default(now()) @map("criado_em")
+  atualizadoEm        DateTime @updatedAt @map("atualizado_em")
+
+  enderecos     EnderecoUsuario[]
+  pedidos       Pedido[]
+  conversas     ConversaChat[]
+  avaliacoes    AvaliacaoLoja[]
+
+  @@map("usuarios")
+}
+
+enum TipoTransporte {
+  bike
+  moto
+  carro
+}
+
+enum StatusConta {
+  pendente
+  ativo
+  suspenso
+}
+
+model Entregador {
+  id             String         @id @default(uuid())
+  nome           String
+  cpf            String         @unique
+  telefone       String         @unique
+  email          String         @unique
+  senhaHash      String         @map("senha_hash")
+  fotoUrl        String?        @map("foto_url")
+  tipoTransporte TipoTransporte @map("tipo_transporte")
+  statusConta    StatusConta    @default(pendente) @map("status_conta")
+  criadoEm       DateTime       @default(now()) @map("criado_em")
+  atualizadoEm   DateTime       @updatedAt @map("atualizado_em")
+
+  documentos     DocumentoEntregador?
+  veiculo        VeiculoEntregador?
+  dadosBancarios DadosBancariosEntregador?
+  entregas       EntregaRealizada[]
+  pedidos        Pedido[]
+
+  @@map("entregadores")
+}
+
+model Lojista {
+  id              String   @id @default(uuid())
+  cnpj            String   @unique
+  nomeResponsavel String   @map("nome_responsavel")
+  email           String   @unique
+  senhaHash       String   @map("senha_hash")
+  telefone        String
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  atualizadoEm    DateTime @updatedAt @map("atualizado_em")
+
+  lojas Loja[]
+
+  @@map("lojistas")
+}
+
+// ========================================
+// 2. DOCUMENTAÇÃO DO ENTREGADOR
+// ========================================
+
+enum StatusDocumento {
+  pendente
+  aprovado
+  rejeitado
+}
+
+model DocumentoEntregador {
+  id           String          @id @default(uuid())
+  entregadorId String          @unique @map("entregador_id")
+  frenteUrl    String          @map("frente_url")
+  versoUrl     String          @map("verso_url")
+  status       StatusDocumento @default(pendente)
+  revisadoEm   DateTime?       @map("revisado_em")
+  criadoEm     DateTime        @default(now()) @map("criado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+
+  @@map("documentos_entregador")
+}
+
+model VeiculoEntregador {
+  id           String   @id @default(uuid())
+  entregadorId String   @unique @map("entregador_id")
+  placa        String
+  modelo       String
+  cor          String
+  ano          Int
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+
+  @@map("veiculos_entregador")
+}
+
+enum TipoDadosBancarios {
+  pix
+  conta
+}
+
+model DadosBancariosEntregador {
+  id           String             @id @default(uuid())
+  entregadorId String             @unique @map("entregador_id")
+  tipo         TipoDadosBancarios
+  chavePix     String?            @map("chave_pix")
+  banco        String?
+  agencia      String?
+  conta        String?
+  criadoEm     DateTime           @default(now()) @map("criado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+
+  @@map("dados_bancarios_entregador")
+}
+
+// ========================================
+// 3. LOJA
+// ========================================
+
+model Loja {
+  id                 String   @id @default(uuid())
+  lojistaId          String   @map("lojista_id")
+  nome               String
+  descricao          String
+  categoria          String
+  logoUrl            String?  @map("logo_url")
+  bannerUrl          String?  @map("banner_url")
+  telefone           String
+  whatsapp           String?
+  avaliacao          Decimal  @default(0) @db.Decimal(2, 1)
+  totalAvaliacoes    Int      @default(0) @map("total_avaliacoes")
+  tempoEntregaMin    Int      @map("tempo_entrega_min")
+  tempoEntregaMax    Int      @map("tempo_entrega_max")
+  taxaEntrega        Decimal  @map("taxa_entrega") @db.Decimal(10, 2)
+  aberta             Boolean  @default(true)
+  aceitaAgendamento  Boolean  @default(false) @map("aceita_agendamento")
+  antecedenciaMinima Int?     @map("antecedencia_minima")
+  criadoEm           DateTime @default(now()) @map("criado_em")
+  atualizadoEm       DateTime @updatedAt @map("atualizado_em")
+
+  lojista   Lojista                @relation(fields: [lojistaId], references: [id], onDelete: Cascade)
+  endereco  EnderecoLoja?
+  horarios  HorarioFuncionamento[]
+  produtos  Produto[]
+  pedidos   Pedido[]
+  avaliacoes AvaliacaoLoja[]
+
+  @@map("lojas")
+}
+
+model EnderecoLoja {
+  id          String   @id @default(uuid())
+  lojaId      String   @unique @map("loja_id")
+  rua         String
+  numero      String
+  bairro      String
+  cep         String
+  cidade      String
+  complemento String?
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  loja Loja @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+
+  @@map("enderecos_loja")
+}
+
+model HorarioFuncionamento {
+  id         String   @id @default(uuid())
+  lojaId     String   @map("loja_id")
+  diaSemana  Int      @map("dia_semana")
+  ativo      Boolean  @default(true)
+  abertura   String
+  fechamento String
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  loja Loja @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+
+  @@map("horarios_funcionamento")
+}
+
+// ========================================
+// 4. CATÁLOGO
+// ========================================
+
+model Categoria {
+  id    String @id @default(uuid())
+  nome  String @unique
+  emoji String
+
+  @@map("categorias")
+}
+
+model Produto {
+  id           String   @id @default(uuid())
+  lojaId       String   @map("loja_id")
+  nome         String
+  descricao    String
+  preco        Decimal  @db.Decimal(10, 2)
+  estoque      Int
+  imagemUrl    String   @map("imagem_url")
+  categoria    String
+  tags         String[]
+  disponivel   Boolean  @default(true)
+  destaque     Boolean  @default(false)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  loja      Loja                  @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  variacoes VariacaoProduto[]
+  itens     ItemPedido[]
+  sugestoes SugestaoProdutoChat[]
+
+  @@map("produtos")
+}
+
+model VariacaoProduto {
+  id        String @id @default(uuid())
+  produtoId String @map("produto_id")
+  nome      String
+  estoque   Int
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@map("variacoes_produto")
+}
+
+// ========================================
+// 5. ENDEREÇOS DO CONSUMIDOR
+// ========================================
+
+model EnderecoUsuario {
+  id          String   @id @default(uuid())
+  usuarioId   String   @map("usuario_id")
+  apelido     String
+  rua         String
+  numero      String
+  bairro      String
+  cep         String
+  cidade      String
+  complemento String?
+  padrao      Boolean  @default(false)
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  usuario Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  pedidos Pedido[]
+
+  @@map("enderecos_usuario")
+}
+
+// ========================================
+// 6. PEDIDOS
+// ========================================
+
+enum StatusPedido {
+  aguardando
+  confirmado
+  preparando
+  saiu_entrega
+  entregue
+  cancelado
+}
+
+enum MetodoPagamento {
+  pix
+  cartao
+}
+
+model Pedido {
+  id                String          @id @default(uuid())
+  consumidorId      String          @map("consumidor_id")
+  lojaId            String          @map("loja_id")
+  entregadorId      String?         @map("entregador_id")
+  enderecoEntregaId String          @map("endereco_entrega_id")
+  status            StatusPedido    @default(aguardando)
+  metodoPagamento   MetodoPagamento @map("metodo_pagamento")
+  subtotal          Decimal         @db.Decimal(10, 2)
+  taxaEntrega       Decimal         @map("taxa_entrega") @db.Decimal(10, 2)
+  desconto          Decimal         @default(0) @db.Decimal(10, 2)
+  total             Decimal         @db.Decimal(10, 2)
+  obs               String?
+  estimativaEntrega DateTime?       @map("estimativa_entrega")
+  criadoEm          DateTime        @default(now()) @map("criado_em")
+  atualizadoEm      DateTime        @updatedAt @map("atualizado_em")
+
+  consumidor       Usuario                 @relation(fields: [consumidorId], references: [id])
+  loja             Loja                    @relation(fields: [lojaId], references: [id])
+  entregador       Entregador?             @relation(fields: [entregadorId], references: [id])
+  enderecoEntrega  EnderecoUsuario         @relation(fields: [enderecoEntregaId], references: [id])
+  itens            ItemPedido[]
+  historico        HistoricoStatusPedido[]
+  pagamento        Pagamento?
+  entregaRealizada EntregaRealizada?
+  avaliacao        AvaliacaoLoja?
+
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id            String  @id @default(uuid())
+  pedidoId      String  @map("pedido_id")
+  produtoId     String  @map("produto_id")
+  nomeSnapshot  String  @map("nome_snapshot")
+  precoUnitario Decimal @map("preco_unitario") @db.Decimal(10, 2)
+  quantidade    Int
+
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_pedido")
+}
+
+model HistoricoStatusPedido {
+  id       String       @id @default(uuid())
+  pedidoId String       @map("pedido_id")
+  status   StatusPedido
+  criadoEm DateTime     @default(now()) @map("criado_em")
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@map("historico_status_pedido")
+}
+
+// ========================================
+// 7. CHAT / IA
+// ========================================
+
+model ConversaChat {
+  id        String   @id @default(uuid())
+  usuarioId String   @map("usuario_id")
+  criadaEm  DateTime @default(now()) @map("criada_em")
+
+  usuario   Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  mensagens MensagemChat[]
+
+  @@map("conversas_chat")
+}
+
+enum RemetenteChat {
+  usuario
+  aju
+}
+
+model MensagemChat {
+  id         String        @id @default(uuid())
+  conversaId String        @map("conversa_id")
+  remetente  RemetenteChat
+  conteudo   String
+  criadaEm   DateTime      @default(now()) @map("criada_em")
+
+  conversa  ConversaChat          @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  sugestoes SugestaoProdutoChat[]
+
+  @@map("mensagens_chat")
+}
+
+model SugestaoProdutoChat {
+  id         String @id @default(uuid())
+  mensagemId String @map("mensagem_id")
+  produtoId  String @map("produto_id")
+
+  mensagem MensagemChat @relation(fields: [mensagemId], references: [id], onDelete: Cascade)
+  produto  Produto      @relation(fields: [produtoId], references: [id])
+
+  @@map("sugestoes_produto_chat")
+}
+
+// ========================================
+// 8. GANHOS DO ENTREGADOR
+// ========================================
+
+model EntregaRealizada {
+  id            String   @id @default(uuid())
+  entregadorId  String   @map("entregador_id")
+  pedidoId      String   @unique @map("pedido_id")
+  valorRecebido Decimal  @map("valor_recebido") @db.Decimal(10, 2)
+  bonus         Decimal? @db.Decimal(10, 2)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id])
+  pedido     Pedido     @relation(fields: [pedidoId], references: [id])
+
+  @@map("entregas_realizadas")
+}
+
+// ========================================
+// 9. AVALIAÇÕES
+// ========================================
+
+model AvaliacaoLoja {
+  id         String   @id @default(uuid())
+  lojaId     String   @map("loja_id")
+  usuarioId  String   @map("usuario_id")
+  pedidoId   String   @unique @map("pedido_id")
+  nota       Int
+  comentario String?
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  loja    Loja    @relation(fields: [lojaId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id])
+
+  @@map("avaliacoes_loja")
+}
+
+// ========================================
+// 10. PAGAMENTOS
+// ========================================
+
+enum StatusPagamento {
+  pendente
+  aprovado
+  falhou
+  estornado
+}
+
+model Pagamento {
+  id        String          @id @default(uuid())
+  pedidoId  String          @unique @map("pedido_id")
+  metodo    MetodoPagamento
+  status    StatusPagamento @default(pendente)
+  valor     Decimal         @db.Decimal(10, 2)
+  gatewayId String?         @map("gateway_id")
+  criadoEm  DateTime        @default(now()) @map("criado_em")
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id])
+
+  @@map("pagamentos")
+}
