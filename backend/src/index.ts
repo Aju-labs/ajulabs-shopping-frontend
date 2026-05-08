@@ -6,6 +6,7 @@ import lojasRoutes from './routes/lojas.routes';
 import produtosRoutes from './routes/produtos.routes';
 import pedidosRoutes from './routes/pedidos.routes';
 import chatRoutes from './routes/chat.routes';
+import enderecosRoutes from './routes/enderecos.routes';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
       produtos: '/produtos',
       pedidos: '/pedidos',
       chat: '/chat',
+      enderecos: '/enderecos',
     },
   });
 });
@@ -36,6 +38,7 @@ app.use('/lojas', lojasRoutes);
 app.use('/produtos', produtosRoutes);
 app.use('/pedidos', pedidosRoutes);
 app.use('/chat', chatRoutes);
+app.use('/enderecos', enderecosRoutes);
 
 // 404
 app.use((req, res) => {
