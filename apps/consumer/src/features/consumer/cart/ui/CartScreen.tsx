@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -6,8 +6,11 @@ import {
   useCartStore,
   calcularGrupos,
   calcularQuantidadeItens,
+  useAuthStore,
 } from '../../../../store';
 import { colors } from '@ajulabs/theme';
+import { EnderecoSalvo } from '@ajulabs/types';
+import { EnderecoService } from '@ajulabs/api-client';
 import { CartLojaGrupo } from './CartLojaGrupo';
 
 export function CartScreen() {
@@ -17,6 +20,22 @@ export function CartScreen() {
   const lojasCache = useCartStore(s => s.lojasCache);
   const aumentar = useCartStore(s => s.aumentar);
   const diminuir = useCartStore(s => s.diminuir);
+  const token = useAuthStore(s => s.token);
+
+  const [enderecos, setEnderecos] = useState<EnderecoSalvo[]>([]);
+  const [enderecoId, setEnderecoId] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    EnderecoService.listar(token).then(data => {
+      setEnderecos(data);
+      const padrao = data.find(e => e.padrao) ?? data[0];
+      if (padrao) setEnderecoId(padrao.id);
+    }).catch(() => {});
+  }, [token]);
+
+  const enderecoAtual = enderecos.find(e => e.id === enderecoId);
 
   const grupos = useMemo(() => calcularGrupos(itensPorLoja, lojasCache), [itensPorLoja, lojasCache]);
   const quantidadeItens = useMemo(
@@ -79,6 +98,72 @@ export function CartScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Endereço de entrega */}
+        <View style={styles.endCard}>
+          <TouchableOpacity
+            style={styles.endRow}
+            onPress={() => setShowPicker(v => !v)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.endIconBox}>
+              <Ionicons name="location" size={16} color={colors.orange} />
+            </View>
+            <View style={{ flex: 1 }}>
+              {enderecoAtual ? (
+                <>
+                  <Text style={styles.endApelido}>{enderecoAtual.apelido}</Text>
+                  <Text style={styles.endRua} numberOfLines={1}>{enderecoAtual.rua}</Text>
+                </>
+              ) : (
+                <Text style={styles.endVazio}>
+                  {enderecos.length === 0 ? 'Adicione um endereço de entrega' : 'Selecione o endereço'}
+                </Text>
+              )}
+            </View>
+            <Ionicons
+              name={showPicker ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.n500}
+            />
+          </TouchableOpacity>
+
+          {showPicker && (
+            <View style={styles.endLista}>
+              {enderecos.map(addr => (
+                <TouchableOpacity
+                  key={addr.id}
+                  style={styles.endOpcao}
+                  onPress={() => { setEnderecoId(addr.id); setShowPicker(false); }}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons
+                    name={addr.id === enderecoId ? 'radio-button-on' : 'radio-button-off'}
+                    size={18}
+                    color={colors.orange}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.endOpcaoApelido}>
+                      {addr.apelido}
+                      {addr.padrao ? '  ·  Padrão' : ''}
+                    </Text>
+                    <Text style={styles.endOpcaoRua} numberOfLines={1}>{addr.rua}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              {enderecos.length === 0 && (
+                <TouchableOpacity
+                  style={styles.endOpcaoAdd}
+                  onPress={() => router.push('/(consumer)/enderecos')}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.orange} />
+                  <Text style={styles.endOpcaoAddTxt}>Adicionar endereço em Perfil</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
+
         {numLojas > 1 && (
           <View style={styles.banner}>
             <View style={styles.bannerTitleRow}>
@@ -161,6 +246,21 @@ const styles = StyleSheet.create({
   divider:         { height: 1, backgroundColor: colors.n100, marginVertical: 8 },
   totalLabel:      { fontSize: 16, fontWeight: '700', color: colors.navy },
   totalValue:      { fontSize: 22, fontWeight: '800', color: colors.navy, letterSpacing: -0.5 },
+
+  endCard:         { backgroundColor: colors.n0, borderRadius: 14, borderWidth: 1,
+                     borderColor: colors.n200, marginBottom: 12, overflow: 'hidden' },
+  endRow:          { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  endIconBox:      { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.orange100,
+                     alignItems: 'center', justifyContent: 'center' },
+  endApelido:      { fontSize: 13, fontWeight: '700', color: colors.navy },
+  endRua:          { fontSize: 12, color: colors.n600, marginTop: 1 },
+  endVazio:        { fontSize: 13, color: colors.n500 },
+  endLista:        { borderTopWidth: 1, borderTopColor: colors.n100, paddingHorizontal: 14, paddingBottom: 10 },
+  endOpcao:        { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  endOpcaoApelido: { fontSize: 13, fontWeight: '600', color: colors.navy },
+  endOpcaoRua:     { fontSize: 12, color: colors.n600, marginTop: 1 },
+  endOpcaoAdd:     { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
+  endOpcaoAddTxt:  { fontSize: 13, color: colors.orange, fontWeight: '500' },
 
   footer:          { padding: 16, paddingBottom: 24, backgroundColor: colors.n0,
                      borderTopWidth: 1, borderTopColor: colors.n100 },

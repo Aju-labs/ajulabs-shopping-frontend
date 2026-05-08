@@ -9,22 +9,17 @@ interface ProdutoCardProps {
   dark?: boolean;
 }
 
-function ProductImg({ uri, alt, width, height }: {
-  uri: string; alt: string; width: number; height: number;
-}) {
+function ProductImg({ uri, alt }: { uri: string; alt: string }) {
   const [error, setError] = useState(false);
   if (error) {
     return (
-      <View style={{ width, height, backgroundColor: colors.orange100,
-        alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: height * 0.3, fontWeight: '700', color: colors.orange600 }}>
-          {alt.charAt(0)}
-        </Text>
+      <View style={styles.imgFallback}>
+        <Text style={styles.imgFallbackText}>{alt.charAt(0)}</Text>
       </View>
     );
   }
   return (
-    <Image source={{ uri }} style={{ width, height }} onError={() => setError(true)} />
+    <Image source={{ uri }} style={styles.img} resizeMode="cover" onError={() => setError(true)} />
   );
 }
 
@@ -39,7 +34,7 @@ export function ProdutoCard({ produto, onAdd, dark = false }: ProdutoCardProps) 
   return (
     <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
       <View>
-        <ProductImg uri={produto.imagem} alt={produto.nome} width={160} height={130} />
+        <ProductImg uri={produto.imagem} alt={produto.nome} />
         {produto.destaque && (
           <View style={styles.badgeDestaque}>
             <Text style={styles.badgeDestaqueText}>⭐ Destaque</Text>
@@ -77,6 +72,10 @@ export function ProdutoCard({ produto, onAdd, dark = false }: ProdutoCardProps) 
 
 const styles = StyleSheet.create({
   card:              { borderRadius: 14, overflow: 'hidden', borderWidth: 1 },
+  img:               { width: '100%', aspectRatio: 4 / 3 },
+  imgFallback:       { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.orange100,
+                       alignItems: 'center', justifyContent: 'center' },
+  imgFallbackText:   { fontSize: 28, fontWeight: '700', color: colors.orange600 },
   info:              { padding: 10 },
   nome:              { fontSize: 12.5, fontWeight: '600', lineHeight: 16, minHeight: 30 },
   desc:              { fontSize: 11, marginTop: 2, lineHeight: 15, minHeight: 28 },
