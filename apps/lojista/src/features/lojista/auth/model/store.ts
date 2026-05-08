@@ -85,6 +85,8 @@ export const useAuthLojistaStore = create<AuthLojistaState>((set) => ({
       isLoggedIn: true,
       token,
       lojistaId: lojista.id,
+      lojaId: lojista.lojaId ?? null,
+      lojaNome: lojista.lojaNome ?? null,
       nomeResponsavel: lojista.nomeResponsavel,
       email: lojista.email,
     });
