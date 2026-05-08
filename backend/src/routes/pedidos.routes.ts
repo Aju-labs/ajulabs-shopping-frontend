@@ -6,12 +6,12 @@ import { prisma } from '../utils/prisma';
 const router = Router();
 
 const criarPedidoSchema = z.object({
-  lojaId: z.string().uuid(),
-  enderecoEntregaId: z.string().uuid(),
+  lojaId: z.string().min(1),
+  enderecoEntregaId: z.string().min(1),
   metodoPagamento: z.enum(['pix', 'cartao']),
   obs: z.string().optional(),
   itens: z.array(z.object({
-    produtoId: z.string().uuid(),
+    produtoId: z.string().min(1),
     quantidade: z.number().int().positive(),
   })),
 });
@@ -119,6 +119,56 @@ router.get('/:id', authMiddleware, authUsuario, async (req: AuthRequest, res) =>
     res.json({ pedido });
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar pedido' });
+  }
+});
+
+// POST /pedidos/:id/rastrear - Rastreamento em tempo real
+router.post('/:id/rastrear', authMiddleware, authUsuario, async (req: AuthRequest, res) => {
+  try {
+    const pedido = await prisma.pedido.findUnique({
+      where: { id: req.params.id },
+      include: {
+        loja: {
+          select: {
+            nome: true,
+            telefone: true,
+            logoUrl: true,
+            endereco: true,
+          },
+        },
+        entregador: {
+          select: {
+            id: true,
+            nome: true,
+            telefone: true,
+            fotoUrl: true,
+            tipoTransporte: true,
+          },
+        },
+        enderecoEntrega: true,
+        historico: { orderBy: { criadoEm: 'asc' } },
+      },
+    });
+
+    if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+    if (pedido.consumidorId !== req.user!.id) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    res.json({
+      rastreamento: {
+        pedidoId: pedido.id,
+        status: pedido.status,
+        estimativaEntrega: pedido.estimativaEntrega,
+        historico: pedido.historico,
+        loja: pedido.loja,
+        entregador: pedido.entregador ?? null,
+        enderecoEntrega: pedido.enderecoEntrega,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar rastreamento' });
   }
 });
 
