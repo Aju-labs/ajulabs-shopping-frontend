@@ -130,6 +130,7 @@ router.post('/entregador/registrar', async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error('[entregador/registrar]', error);
     res.status(500).json({ error: 'Erro ao registrar entregador' });
   }
 });
@@ -137,25 +138,16 @@ router.post('/entregador/registrar', async (req, res) => {
 // Aceita email OU telefone para login (campo "identificador" novo ou "telefone" legado)
 router.post('/entregador/login', async (req, res) => {
   try {
-    const body = z.object({
-      identificador: z.string().optional(),
-      telefone: z.string().optional(),
+    const { cpf, senha } = z.object({
+      cpf: z.string(),
       senha: z.string(),
     }).parse(req.body);
 
-    const raw = body.identificador ?? body.telefone ?? '';
-    const senha = body.senha;
-
-    if (!raw) return res.status(400).json({ error: 'Informe email ou telefone' });
-
-    const isEmail = raw.includes('@');
-
-    const entregador = await prisma.entregador.findFirst({
-      where: isEmail ? { email: raw } : { telefone: raw },
-    });
+    const cpfRaw = cpf.replace(/\D/g, '');
+    const entregador = await prisma.entregador.findUnique({ where: { cpf: cpfRaw } });
 
     if (!entregador || !(await compararSenha(senha, entregador.senhaHash))) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      return res.status(401).json({ error: 'CPF ou senha inválidos' });
     }
 
     const tokenPayload = { id: entregador.id, tipo: 'entregador' as const };

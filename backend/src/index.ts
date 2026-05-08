@@ -12,11 +12,13 @@ import perfilRoutes from './routes/perfil.routes';
 import enderecosRoutes from './routes/enderecos.routes';
 import entregadorRoutes from './routes/entregador.routes';
 import lojistaRoutes from './routes/lojista.routes';
-import { criarWebSocketServer } from './routes/websocket';
+import { initSocket } from './utils/socket';
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+initSocket(server);
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -65,9 +67,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
-const httpServer = http.createServer(app);
-criarWebSocketServer(httpServer);
-
-httpServer.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`\n🚀 AjuLabs API rodando em http://localhost:${PORT}\n`);
 });

@@ -2,15 +2,14 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma';
 import { authMiddleware, authEntregador, AuthRequest } from '../middleware/auth';
+import { getIo } from '../utils/socket';
 
 const router = Router();
 
-// Todas as rotas deste arquivo exigem entregador autenticado
 router.use(authMiddleware, authEntregador);
 
 // ========================================
 // POST /entregador/documentos
-// Enviar frente/verso do documento (URLs do Storage)
 // ========================================
 
 const documentosSchema = z.object({
@@ -25,18 +24,8 @@ router.post('/documentos', async (req: AuthRequest, res: Response) => {
 
     const documento = await prisma.documentoEntregador.upsert({
       where: { entregadorId },
-      create: {
-        entregadorId,
-        frenteUrl,
-        versoUrl,
-        status: 'pendente',
-      },
-      update: {
-        frenteUrl,
-        versoUrl,
-        status: 'pendente',
-        revisadoEm: null,
-      },
+      create: { entregadorId, frenteUrl, versoUrl, status: 'pendente' },
+      update: { frenteUrl, versoUrl, status: 'pendente', revisadoEm: null },
     });
 
     res.status(201).json({ documento });
@@ -49,7 +38,6 @@ router.post('/documentos', async (req: AuthRequest, res: Response) => {
 
 // ========================================
 // POST /entregador/veiculo
-// Cadastrar dados do veículo
 // ========================================
 
 const veiculoSchema = z.object({
@@ -80,7 +68,6 @@ router.post('/veiculo', async (req: AuthRequest, res: Response) => {
 
 // ========================================
 // POST /entregador/dados-bancarios
-// Cadastrar PIX ou conta bancária
 // ========================================
 
 const dadosBancariosSchema = z
@@ -128,7 +115,6 @@ router.post('/dados-bancarios', async (req: AuthRequest, res: Response) => {
 
 // ========================================
 // GET /entregador/perfil
-// Ver perfil completo com status do onboarding
 // ========================================
 
 router.get('/perfil', async (req: AuthRequest, res: Response) => {
@@ -137,16 +123,10 @@ router.get('/perfil', async (req: AuthRequest, res: Response) => {
 
     const entregador = await prisma.entregador.findUnique({
       where: { id: entregadorId },
-      include: {
-        documentos: true,
-        veiculo: true,
-        dadosBancarios: true,
-      },
+      include: { documentos: true, veiculo: true, dadosBancarios: true },
     });
 
-    if (!entregador) {
-      return res.status(404).json({ error: 'Entregador não encontrado' });
-    }
+    if (!entregador) return res.status(404).json({ error: 'Entregador não encontrado' });
 
     const { senhaHash, ...entregadorSemSenha } = entregador;
 
@@ -167,7 +147,6 @@ router.get('/perfil', async (req: AuthRequest, res: Response) => {
 
 // ========================================
 // GET /entregador/entregas
-// Listar entregas realizadas e ganhos
 // ========================================
 
 router.get('/entregas', async (req: AuthRequest, res: Response) => {
@@ -194,19 +173,339 @@ router.get('/entregas', async (req: AuthRequest, res: Response) => {
     });
 
     const totalGanho = entregas.reduce((acc, e) => {
-      const valor = Number(e.valorRecebido);
-      const bonus = e.bonus ? Number(e.bonus) : 0;
-      return acc + valor + bonus;
+      return acc + Number(e.valorRecebido) + (e.bonus ? Number(e.bonus) : 0);
     }, 0);
 
-    res.json({
-      total: entregas.length,
-      totalGanho: totalGanho.toFixed(2),
-      entregas,
-    });
+    res.json({ total: entregas.length, totalGanho: totalGanho.toFixed(2), entregas });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao listar entregas' });
+  }
+});
+
+// ========================================
+// PATCH /entregador/status
+// Toggle online/offline
+// ========================================
+
+router.patch('/status', async (req: AuthRequest, res: Response) => {
+  try {
+    const { online } = z.object({ online: z.boolean() }).parse(req.body);
+    const entregadorId = req.user!.id;
+
+    const entregador = await prisma.entregador.update({
+      where: { id: entregadorId },
+      data: { online },
+      select: { id: true, online: true, statusConta: true },
+    });
+
+    res.json({ online: entregador.online });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao atualizar status' });
+  }
+});
+
+// ========================================
+// GET /entregador/corridas/disponivel
+// Pedidos confirmados sem entregador, para entregador online
+// ========================================
+
+router.get('/corridas/disponivel', async (req: AuthRequest, res: Response) => {
+  try {
+    const entregadorId = req.user!.id;
+
+    const entregador = await prisma.entregador.findUnique({
+      where: { id: entregadorId },
+      select: { online: true },
+    });
+
+    if (!entregador?.online) {
+      return res.json({ corridas: [] });
+    }
+
+    const corridas = await prisma.pedido.findMany({
+      where: { status: 'confirmado', entregadorId: null },
+      include: {
+        loja: {
+          select: {
+            id: true,
+            nome: true,
+            endereco: { select: { rua: true, numero: true, bairro: true, cidade: true } },
+          },
+        },
+        enderecoEntrega: { select: { rua: true, numero: true, bairro: true, cidade: true } },
+        itens: {
+          select: {
+            quantidade: true,
+            nomeSnapshot: true,
+            precoUnitario: true,
+          },
+        },
+      },
+      orderBy: { criadoEm: 'asc' },
+    });
+
+    res.json({ corridas });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar corridas' });
+  }
+});
+
+// ========================================
+// POST /entregador/corridas/:pedidoId/aceitar
+// ========================================
+
+router.post('/corridas/:pedidoId/aceitar', async (req: AuthRequest, res: Response) => {
+  try {
+    const { pedidoId } = req.params;
+    const entregadorId = req.user!.id;
+
+    const pedido = await prisma.pedido.findFirst({
+      where: { id: pedidoId, status: 'confirmado', entregadorId: null },
+    });
+
+    if (!pedido) {
+      return res.status(409).json({ error: 'Corrida não está mais disponível' });
+    }
+
+    const pedidoAtualizado = await prisma.pedido.update({
+      where: { id: pedidoId },
+      data: { entregadorId, status: 'preparando' },
+      include: {
+        loja: { select: { id: true, nome: true, telefone: true } },
+        enderecoEntrega: true,
+        itens: { select: { quantidade: true, nomeSnapshot: true, precoUnitario: true } },
+      },
+    });
+
+    await prisma.historicoStatusPedido.create({
+      data: { pedidoId, status: 'preparando' },
+    });
+
+    try {
+      const io = getIo();
+      io.to('entregadores').emit('corrida:aceita', { pedidoId, entregadorId });
+      io.to(`usuario:${pedido.consumidorId}`).emit('pedido:status', {
+        pedidoId,
+        status: 'preparando',
+      });
+    } catch {}
+
+    res.json({ pedido: pedidoAtualizado });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao aceitar corrida' });
+  }
+});
+
+// ========================================
+// POST /entregador/corridas/:pedidoId/rejeitar
+// ========================================
+
+router.post('/corridas/:pedidoId/rejeitar', async (_req: AuthRequest, res: Response) => {
+  res.json({ ok: true });
+});
+
+// ========================================
+// PATCH /entregador/corridas/:pedidoId/status
+// Transições: preparando → saiu_entrega → entregue
+// ========================================
+
+const TRANSICOES_VALIDAS: Record<string, string> = {
+  preparando: 'saiu_entrega',
+  saiu_entrega: 'entregue',
+};
+
+router.patch('/corridas/:pedidoId/status', async (req: AuthRequest, res: Response) => {
+  try {
+    const { pedidoId } = req.params;
+    const entregadorId = req.user!.id;
+    const { status } = z
+      .object({ status: z.enum(['saiu_entrega', 'entregue']) })
+      .parse(req.body);
+
+    const pedido = await prisma.pedido.findFirst({
+      where: { id: pedidoId, entregadorId },
+    });
+
+    if (!pedido) {
+      return res.status(404).json({ error: 'Corrida não encontrada' });
+    }
+
+    const proximoStatus = TRANSICOES_VALIDAS[pedido.status];
+    if (proximoStatus !== status) {
+      return res.status(400).json({
+        error: `Transição inválida: ${pedido.status} → ${status}. Esperado: ${proximoStatus ?? 'nenhum'}`,
+      });
+    }
+
+    const pedidoAtualizado = await prisma.pedido.update({
+      where: { id: pedidoId },
+      data: { status },
+      select: { id: true, status: true, consumidorId: true },
+    });
+
+    await prisma.historicoStatusPedido.create({
+      data: { pedidoId, status: status as any },
+    });
+
+    if (status === 'entregue') {
+      const valorRecebido = Number(pedido.taxaEntrega) * 0.8;
+      await prisma.entregaRealizada.upsert({
+        where: { pedidoId },
+        create: { entregadorId, pedidoId, valorRecebido },
+        update: { valorRecebido },
+      });
+    }
+
+    try {
+      const io = getIo();
+      io.to(`usuario:${pedidoAtualizado.consumidorId}`).emit('pedido:status', {
+        pedidoId,
+        status,
+      });
+    } catch {}
+
+    res.json({ status: pedidoAtualizado.status });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao atualizar status da corrida' });
+  }
+});
+
+// ========================================
+// GET /entregador/ganhos
+// Resumo de ganhos: semana, mês, total
+// ========================================
+
+router.get('/ganhos', async (req: AuthRequest, res: Response) => {
+  try {
+    const entregadorId = req.user!.id;
+
+    const agora = new Date();
+    const inicioSemana = new Date(agora);
+    inicioSemana.setDate(agora.getDate() - agora.getDay());
+    inicioSemana.setHours(0, 0, 0, 0);
+
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+    const [semana, mes, allTime, emAndamento] = await Promise.all([
+      prisma.entregaRealizada.aggregate({
+        where: { entregadorId, criadoEm: { gte: inicioSemana } },
+        _sum: { valorRecebido: true, bonus: true },
+        _count: true,
+      }),
+      prisma.entregaRealizada.aggregate({
+        where: { entregadorId, criadoEm: { gte: inicioMes } },
+        _sum: { valorRecebido: true, bonus: true },
+        _count: true,
+      }),
+      prisma.entregaRealizada.aggregate({
+        where: { entregadorId },
+        _sum: { valorRecebido: true, bonus: true },
+        _count: true,
+      }),
+      prisma.pedido.count({
+        where: { entregadorId, status: { in: ['preparando', 'saiu_entrega'] } },
+      }),
+    ]);
+
+    const calcTotal = (agg: typeof allTime) =>
+      (Number(agg._sum.valorRecebido ?? 0) + Number(agg._sum.bonus ?? 0)).toFixed(2);
+
+    res.json({
+      semana: { total: calcTotal(semana), corridas: semana._count },
+      mes: { total: calcTotal(mes), corridas: mes._count },
+      allTime: { total: calcTotal(allTime), corridas: allTime._count },
+      emAndamento,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar ganhos' });
+  }
+});
+
+// ========================================
+// POST /entregador/saque
+// Solicitar saque via PIX
+// ========================================
+
+router.post('/saque', async (req: AuthRequest, res: Response) => {
+  try {
+    const entregadorId = req.user!.id;
+    const { valor } = z.object({ valor: z.number().min(10) }).parse(req.body);
+
+    const [ganhos, saques, entregador] = await Promise.all([
+      prisma.entregaRealizada.aggregate({
+        where: { entregadorId },
+        _sum: { valorRecebido: true, bonus: true },
+      }),
+      prisma.solicitacaoSaque.aggregate({
+        where: { entregadorId, status: { not: 'falhou' } },
+        _sum: { valor: true },
+      }),
+      prisma.entregador.findUnique({
+        where: { id: entregadorId },
+        include: { dadosBancarios: true },
+      }),
+    ]);
+
+    const totalGanho =
+      Number(ganhos._sum.valorRecebido ?? 0) + Number(ganhos._sum.bonus ?? 0);
+    const totalSacado = Number(saques._sum.valor ?? 0);
+    const saldo = totalGanho - totalSacado;
+
+    if (valor > saldo) {
+      return res.status(400).json({
+        error: `Saldo insuficiente. Disponível: R$ ${saldo.toFixed(2)}`,
+      });
+    }
+
+    if (!entregador?.dadosBancarios?.chavePix) {
+      return res.status(400).json({
+        error: 'Cadastre uma chave PIX antes de solicitar saque',
+      });
+    }
+
+    const saque = await prisma.solicitacaoSaque.create({
+      data: {
+        entregadorId,
+        valor,
+        chavePix: entregador.dadosBancarios.chavePix,
+        status: 'solicitado',
+      },
+    });
+
+    res.status(201).json({ saque, saldoRestante: (saldo - valor).toFixed(2) });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao solicitar saque' });
+  }
+});
+
+// ========================================
+// GET /entregador/saques
+// Histórico de saques solicitados
+// ========================================
+
+router.get('/saques', async (req: AuthRequest, res: Response) => {
+  try {
+    const entregadorId = req.user!.id;
+
+    const saques = await prisma.solicitacaoSaque.findMany({
+      where: { entregadorId },
+      orderBy: { criadoEm: 'desc' },
+    });
+
+    res.json({ saques });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao listar saques' });
   }
 });
 
