@@ -191,6 +191,19 @@ router.post('/lojista/registrar', async (req, res) => {
     const senhaHash = await hashSenha(senha);
     const lojista = await prisma.lojista.create({ data: { ...dadosLojista, senhaHash } });
 
+    const loja = await prisma.loja.create({
+      data: {
+        lojistaId: lojista.id,
+        nome: dados.nomeResponsavel,
+        descricao: '',
+        categoria: '',
+        telefone: dados.telefone,
+        tempoEntregaMin: 30,
+        tempoEntregaMax: 60,
+        taxaEntrega: 0,
+      },
+    });
+
     const tokenPayload = { id: lojista.id, tipo: 'lojista' as const };
     const token = gerarToken(tokenPayload);
     const refreshToken = gerarRefreshToken(tokenPayload);
@@ -198,7 +211,7 @@ router.post('/lojista/registrar', async (req, res) => {
     res.status(201).json({
       token,
       refreshToken,
-      lojista: { id: lojista.id, nomeResponsavel: lojista.nomeResponsavel, email: lojista.email },
+      lojista: { id: lojista.id, nomeResponsavel: lojista.nomeResponsavel, email: lojista.email, lojaId: loja.id, lojaNome: loja.nome },
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });

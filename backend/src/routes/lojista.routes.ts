@@ -175,6 +175,14 @@ const lojaUpdateSchema = z.object({
   telefone: z.string().optional(),
   aceitaAgendamento: z.boolean().optional(),
   antecedenciaMinima: z.number().int().nonnegative().optional(),
+  endereco: z.object({
+    rua: z.string(),
+    numero: z.string().optional().default(''),
+    bairro: z.string(),
+    cep: z.string(),
+    cidade: z.string(),
+    complemento: z.string().optional(),
+  }).optional(),
 });
 
 // GET /lojista/lojas/:id - Detalhes da loja (incluindo campos privados)
@@ -203,11 +211,21 @@ router.patch('/lojas/:id', authMiddleware, authLojista, async (req: AuthRequest,
     const loja = await verificarDonoLoja(req.params.id, req.user!.id);
     if (!loja) return res.status(403).json({ error: 'Acesso negado' });
 
-    const dados = lojaUpdateSchema.parse(req.body);
+    const { endereco, ...dadosSemEndereco } = lojaUpdateSchema.parse(req.body);
 
     const lojaAtualizada = await prisma.loja.update({
       where: { id: req.params.id },
-      data: dados,
+      data: {
+        ...dadosSemEndereco,
+        ...(endereco && {
+          endereco: {
+            upsert: {
+              create: endereco,
+              update: endereco,
+            },
+          },
+        }),
+      },
       include: { endereco: true },
     });
 

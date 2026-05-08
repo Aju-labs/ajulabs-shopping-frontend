@@ -222,6 +222,13 @@ export const LojistaService = {
       telefone?: string;
       aceitaAgendamento?: boolean;
       antecedenciaMinima?: number;
+      endereco?: {
+        rua: string;
+        numero?: string;
+        bairro: string;
+        cep: string;
+        cidade: string;
+      };
     },
   ): Promise<void> => {
     const res = await fetch(`${API_URL}/lojista/lojas/${lojaId}`, {
