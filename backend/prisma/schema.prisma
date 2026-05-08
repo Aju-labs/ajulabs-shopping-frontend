@@ -52,6 +52,7 @@ model Entregador {
   fotoUrl        String?        @map("foto_url")
   tipoTransporte TipoTransporte @map("tipo_transporte")
   statusConta    StatusConta    @default(pendente) @map("status_conta")
+  online         Boolean        @default(false)
   criadoEm       DateTime       @default(now()) @map("criado_em")
   atualizadoEm   DateTime       @updatedAt @map("atualizado_em")
 
@@ -60,6 +61,7 @@ model Entregador {
   dadosBancarios DadosBancariosEntregador?
   entregas       EntregaRealizada[]
   pedidos        Pedido[]
+  saques         SolicitacaoSaque[]
 
   @@map("entregadores")
 }
@@ -449,4 +451,29 @@ model Pagamento {
   pedido Pedido @relation(fields: [pedidoId], references: [id])
 
   @@map("pagamentos")
+}
+
+// ========================================
+// 11. SAQUES DO ENTREGADOR
+// ========================================
+
+enum StatusSaque {
+  solicitado
+  processando
+  concluido
+  falhou
+}
+
+model SolicitacaoSaque {
+  id           String      @id @default(uuid())
+  entregadorId String      @map("entregador_id")
+  valor        Decimal     @db.Decimal(10, 2)
+  chavePix     String      @map("chave_pix")
+  status       StatusSaque @default(solicitado)
+  criadoEm    DateTime    @default(now()) @map("criado_em")
+  atualizadoEm DateTime   @updatedAt @map("atualizado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id])
+
+  @@map("solicitacoes_saque")
 }

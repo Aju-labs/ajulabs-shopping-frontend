@@ -17,7 +17,6 @@ interface LoginEntregadorProps {
 export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
   const router = useRouter();
   const login = useAuthEntregadorStore(s => s.login);
-  const register = useAuthEntregadorStore(s => s.register);
   const [cpf, setCpf]       = useState('');
   const [senha, setSenha]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,12 +30,11 @@ export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
     setError('');
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      login(cpf);
+      await login(cpf, senha);
       onLoginSuccess?.();
       router.replace('/');
-    } catch {
-      setError('CPF ou senha incorretos. Tente novamente.');
+    } catch (e: any) {
+      setError(e?.message ?? 'CPF ou senha incorretos. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -93,7 +91,7 @@ export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
         <View style={styles.registerRow}>
           <Text style={styles.registerText}>Primeira vez? </Text>
           <TouchableOpacity
-            onPress={() => { register(); router.replace('/'); }}
+            onPress={() => router.push('/(auth)/cadastro' as any)}
             activeOpacity={0.8}
           >
             <Text style={styles.registerLink}>Criar conta</Text>

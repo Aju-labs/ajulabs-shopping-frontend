@@ -118,21 +118,23 @@ router.post('/entregador/registrar', async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error('[entregador/registrar]', error);
     res.status(500).json({ error: 'Erro ao registrar entregador' });
   }
 });
 
 router.post('/entregador/login', async (req, res) => {
   try {
-    const { telefone, senha } = z.object({
-      telefone: z.string(),
+    const { cpf, senha } = z.object({
+      cpf: z.string(),
       senha: z.string(),
     }).parse(req.body);
 
-    const entregador = await prisma.entregador.findUnique({ where: { telefone } });
+    const cpfRaw = cpf.replace(/\D/g, '');
+    const entregador = await prisma.entregador.findUnique({ where: { cpf: cpfRaw } });
 
     if (!entregador || !(await compararSenha(senha, entregador.senhaHash))) {
-      return res.status(401).json({ error: 'Telefone ou senha inválidos' });
+      return res.status(401).json({ error: 'CPF ou senha inválidos' });
     }
 
     const token = gerarToken({ id: entregador.id, tipo: 'entregador' });
