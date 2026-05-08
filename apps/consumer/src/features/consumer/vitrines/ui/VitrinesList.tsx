@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { View, Text, FlatList, TextInput, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LojaService } from '@ajulabs/api-client';
 import { Loja } from '@ajulabs/types';
 import { colors } from '@ajulabs/theme';
+import { useCartStore, calcularQuantidadeItens } from '../../../../store';
 import { LojaCard } from './LojaCard';
 import { LojasDestaque } from './LojasDestaque';
 import { CategoriasBar, CATEGORIAS } from './CategoriasBar';
@@ -19,6 +20,8 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const itensPorLoja = useCartStore(s => s.itensPorLoja);
+  const quantidadeItens = useMemo(() => calcularQuantidadeItens(itensPorLoja), [itensPorLoja]);
 
   useEffect(() => {
     LojaService.listar()
@@ -48,10 +51,24 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
       <View style={[styles.header, { backgroundColor: surface, borderBottomColor: border }]}>
-        <Text style={[styles.titulo, { color: textColor }]}>Lojas em Aracaju</Text>
-        <Text style={[styles.subtitulo, { color: subColor }]}>
-          {lojas.length} lojas parceiras · entrega em até 50 min
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.titulo, { color: textColor }]}>Lojas em Aracaju</Text>
+            <Text style={[styles.subtitulo, { color: subColor }]}>
+              {lojas.length} lojas parceiras · entrega em até 50 min
+            </Text>
+          </View>
+          {quantidadeItens > 0 && (
+            <TouchableOpacity
+              style={styles.cartBtn}
+              onPress={() => router.push('/(consumer)/carrinho')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="cart" size={18} color={colors.n0} />
+              <Text style={styles.cartBadgeTxt}>{quantidadeItens}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={[styles.buscaWrapper, {
           backgroundColor: dark ? 'rgba(255,255,255,0.05)' : colors.n50,
           borderColor: border,
@@ -111,8 +128,13 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
 const styles = StyleSheet.create({
   container:   { flex: 1 },
   header:      { paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1 },
+  headerRow:   { flexDirection: 'row', alignItems: 'center', gap: 12 },
   titulo:      { fontWeight: '700', fontSize: 22, letterSpacing: -0.3 },
   subtitulo:   { fontSize: 13, marginTop: 4 },
+  cartBtn:     { flexDirection: 'row', alignItems: 'center', gap: 5,
+                 backgroundColor: colors.orange, paddingHorizontal: 12, paddingVertical: 8,
+                 borderRadius: 99 },
+  cartBadgeTxt:{ color: colors.n0, fontSize: 13, fontWeight: '700' },
   buscaWrapper:{ flexDirection: 'row', alignItems: 'center', gap: 10,
                  borderWidth: 1, borderRadius: 14,
                  paddingHorizontal: 14, paddingVertical: 10, marginTop: 14 },

@@ -374,21 +374,53 @@ export const EntregadorService = {
   },
 };
 
+function mapEndereco(e: any): EnderecoSalvo {
+  return {
+    id: e.id,
+    apelido: e.apelido ?? 'Endereço',
+    rua: e.numero ? `${e.rua}, ${e.numero}` : e.rua,
+    bairro: e.cidade ? `${e.bairro}, ${e.cidade}` : e.bairro,
+    cep: e.cep,
+    padrao: e.padrao ?? false,
+  };
+}
+
 export const EnderecoService = {
   listar: async (token: string): Promise<EnderecoSalvo[]> => {
-    const res = await fetch(`${API_URL}/enderecos`, {
-      headers: authHeader(token),
-    });
+    const res = await fetch(`${API_URL}/enderecos`, { headers: authHeader(token) });
     if (!res.ok) return [];
     const { enderecos } = await res.json();
-    return (enderecos ?? []).map((e: any): EnderecoSalvo => ({
-      id: e.id,
-      apelido: e.apelido ?? 'Endereço',
-      rua: e.numero ? `${e.rua}, ${e.numero}` : e.rua,
-      bairro: e.cidade ? `${e.bairro}, ${e.cidade}` : e.bairro,
-      cep: e.cep,
-      padrao: e.padrao ?? false,
-    }));
+    return (enderecos ?? []).map(mapEndereco);
+  },
+
+  criar: async (
+    token: string,
+    dados: { apelido: string; rua: string; numero: string; bairro: string; cep: string; cidade: string; complemento?: string },
+  ): Promise<EnderecoSalvo> => {
+    const res = await fetch(`${API_URL}/enderecos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+      body: JSON.stringify(dados),
+    });
+    if (!res.ok) throw new Error('Erro ao criar endereço');
+    const { endereco } = await res.json();
+    return mapEndereco(endereco);
+  },
+
+  remover: async (token: string, id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/enderecos/${id}`, {
+      method: 'DELETE',
+      headers: authHeader(token),
+    });
+    if (!res.ok) throw new Error('Erro ao remover endereço');
+  },
+
+  definirPadrao: async (token: string, id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/enderecos/${id}/padrao`, {
+      method: 'PATCH',
+      headers: authHeader(token),
+    });
+    if (!res.ok) throw new Error('Erro ao definir endereço padrão');
   },
 };
 

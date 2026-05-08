@@ -20,17 +20,17 @@ export function ProfileScreen() {
     {
       icon: 'location-outline',
       label: 'Endereços',
-      onPress: () => Alert.alert('Em breve', 'Gestão de endereços em desenvolvimento'),
+      onPress: () => router.push('/(consumer)/enderecos'),
     },
     {
       icon: 'card-outline',
       label: 'Formas de pagamento',
-      onPress: () => Alert.alert('Em breve', 'Formas de pagamento em desenvolvimento'),
+      onPress: () => router.push('/(consumer)/pagamento'),
     },
     {
       icon: 'heart-outline',
       label: 'Favoritos',
-      onPress: () => Alert.alert('Em breve', 'Favoritos em desenvolvimento'),
+      onPress: () => router.push('/(consumer)/favoritos'),
     },
   ];
 
@@ -38,12 +38,12 @@ export function ProfileScreen() {
     {
       icon: 'notifications-outline',
       label: 'Notificações',
-      onPress: () => Alert.alert('Em breve', 'Notificações em desenvolvimento'),
+      onPress: () => router.push('/(consumer)/notificacoes'),
     },
     {
       icon: 'settings-outline',
       label: 'Ajustes',
-      onPress: () => Alert.alert('Em breve', 'Ajustes em desenvolvimento'),
+      onPress: () => router.push('/(consumer)/ajustes'),
     },
     {
       icon: 'help-circle-outline',
