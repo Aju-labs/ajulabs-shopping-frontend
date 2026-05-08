@@ -144,6 +144,7 @@ function StoreAvatar({ nome, size = 56 }: { nome: string; size?: number }) {
 export function PerfilLoja({ dark = false }: PerfilLojaProps) {
   const token = useAuthLojistaStore(s => s.token);
   const lojaId = useAuthLojistaStore(s => s.lojaId);
+  const logout = useAuthLojistaStore(s => s.logout);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -201,6 +202,13 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
     setHorarios(prev => prev.map((h, i) => i === index ? updated : h));
   }, []);
 
+  const handleLogout = useCallback(() => {
+    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: logout },
+    ]);
+  }, [logout]);
+
   const handlePickBanner = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -230,6 +238,10 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
     }
     setSaving(true);
     try {
+      const ruaPartes = loja.rua.split(',').map(s => s.trim());
+      const rua = ruaPartes[0] ?? loja.rua;
+      const numero = ruaPartes[1] ?? '';
+
       await LojistaService.atualizarLoja(lojaId, token, {
         nome: loja.nome,
         descricao: loja.descricao,
@@ -237,6 +249,9 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
         telefone: loja.telefone,
         aceitaAgendamento: loja.aceitaAgendamento,
         antecedenciaMinima: parseInt(loja.antecedenciaMinima, 10) || 120,
+        ...(loja.bairro || loja.cep || loja.cidade ? {
+          endereco: { rua, numero, bairro: loja.bairro, cep: loja.cep, cidade: loja.cidade },
+        } : {}),
       });
       Alert.alert('Salvo!', 'As informações da loja foram atualizadas.');
     } catch (e) {
@@ -381,6 +396,11 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
           )}
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <Ionicons name="log-out-outline" size={18} color="#E24B4A" />
+          <Text style={styles.logoutBtnText}>Sair da conta</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 24 }} />
       </ScrollView>
     </View>
@@ -440,4 +460,8 @@ const styles = StyleSheet.create({
   saveBtn:          { height: 50, borderRadius: 14, backgroundColor: colors.orange,
                       alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   saveBtnText:      { fontSize: 15, fontWeight: '700', color: '#fff' },
+  logoutBtn:        { height: 50, borderRadius: 14, borderWidth: 1, borderColor: '#E24B4A',
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                      gap: 8, marginTop: 10 },
+  logoutBtnText:    { fontSize: 15, fontWeight: '700', color: '#E24B4A' },
 });
