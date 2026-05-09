@@ -18,7 +18,7 @@ COPY packages/types/package.json ./packages/types/
 COPY backend/package.json ./backend/
 
 # Install com devDeps (precisa de tsc + prisma CLI)
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+RUN --mount=type=cache,id=s/pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --frozen-lockfile --filter @ajulabs/backend...
 
