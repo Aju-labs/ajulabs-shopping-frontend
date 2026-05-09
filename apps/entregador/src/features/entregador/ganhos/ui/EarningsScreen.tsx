@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,21 +29,6 @@ function buildWeekdayLabels(dailyData: any[] | null): string[] {
   }
   const today = new Date().getDay();
   return Array.from({ length: 7 }, (_, i) => WEEKDAY_LABELS[(today - 6 + i + 7) % 7]);
-}
-
-function Stars({ value }: { value: number }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 1 }}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <Ionicons
-          key={i}
-          name={i < value ? 'star' : 'star-outline'}
-          size={11}
-          color="#F2760F"
-        />
-      ))}
-    </View>
-  );
 }
 
 function PixModal({ visible, ganho, onClose }: { visible: boolean; ganho: number; onClose: () => void }) {
@@ -93,6 +78,7 @@ export function EarningsScreen() {
   const [entregas, setEntregas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPix, setShowPix] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number>(6);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -114,6 +100,14 @@ export function EarningsScreen() {
   const weekLabels = buildWeekdayLabels(dailyData);
   const max = Math.max(...SALES_7D, 1);
   const totalSemana = ganhoSemana;
+
+  const selectedValue = SALES_7D[selectedDay] ?? 0;
+  const selectedLabel = weekLabels[selectedDay] ?? '–';
+  const selectedDailyEntry = dailyData ? dailyData.slice(-7)[selectedDay] : null;
+  const selectedCorridas = selectedDailyEntry?.corridas ?? selectedDailyEntry?.total_corridas ?? 0;
+  const selectedDate = selectedDailyEntry
+    ? new Date(selectedDailyEntry.dia ?? selectedDailyEntry.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    : null;
 
   if (loading) {
     return (
@@ -160,20 +154,38 @@ export function EarningsScreen() {
             {SALES_7D.map((v, i) => {
               const h = max > 0 ? (v / max) * 100 : 2;
               const isToday = i === SALES_7D.length - 1;
+              const isSel = i === selectedDay;
+              const barColor = isSel ? '#F2760F' : isToday ? 'rgba(242,118,15,0.25)' : '#E4E7F1';
               return (
-                <View key={i} style={s.chartCol}>
-                  <Text style={s.chartBarVal}>
+                <TouchableOpacity key={i} style={s.chartCol} onPress={() => setSelectedDay(i)} activeOpacity={0.7}>
+                  <Text style={[s.chartBarVal, { color: isSel ? '#F2760F' : '#9099B3' }]}>
                     {v >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v)}
                   </Text>
                   <View style={s.chartBarTrack}>
-                    <View style={[s.chartBar, { height: `${h}%` as any, backgroundColor: isToday ? '#F2760F' : '#E4E7F1' }]} />
+                    <View style={[s.chartBar, { height: `${h}%` as any, backgroundColor: barColor }]} />
                   </View>
-                  <Text style={[s.chartDay, { color: isToday ? '#F2760F' : '#9099B3', fontWeight: isToday ? '700' : '500' }]}>
+                  <Text style={[s.chartDay, { color: isSel ? '#F2760F' : isToday ? 'rgba(242,118,15,0.6)' : '#9099B3', fontWeight: isSel ? '700' : '500' }]}>
                     {weekLabels[i]}
                   </Text>
-                </View>
+                  {isSel && <View style={s.chartSelDot} />}
+                </TouchableOpacity>
               );
             })}
+          </View>
+
+          {/* Detalhe do dia selecionado */}
+          <View style={s.dayDetail}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.dayDetailLabel}>
+                {selectedLabel}{selectedDate ? ` · ${selectedDate}` : ''}
+              </Text>
+              <Text style={s.dayDetailSub}>
+                {selectedCorridas > 0 ? `${selectedCorridas} corrida${selectedCorridas !== 1 ? 's' : ''}` : 'Sem corridas'}
+              </Text>
+            </View>
+            <Text style={[s.dayDetailAmount, { color: selectedValue > 0 ? '#000933' : '#9099B3' }]}>
+              {brl(selectedValue)}
+            </Text>
           </View>
         </View>
 
@@ -300,6 +312,18 @@ const s = StyleSheet.create({
   chartBarTrack: { flex: 1, width: '100%', justifyContent: 'flex-end' },
   chartBar: { width: '100%', borderRadius: 6, minHeight: 4 },
   chartDay: { fontSize: 10, marginTop: 6 },
+  chartSelDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#F2760F', marginTop: 3 },
+  dayDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#E4E7F1',
+  },
+  dayDetailLabel: { fontSize: 13, fontWeight: '700', color: '#000933' },
+  dayDetailSub: { fontSize: 11, color: '#9099B3', marginTop: 2 },
+  dayDetailAmount: { fontSize: 18, fontWeight: '800' },
   metaRow: { flexDirection: 'row', alignItems: 'center' },
   metaIcon: {
     width: 46,

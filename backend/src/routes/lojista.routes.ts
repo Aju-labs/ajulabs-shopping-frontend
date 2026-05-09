@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 import multer from 'multer';
 import { authMiddleware, authLojista, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
-import { uploadImagemProduto } from '../utils/supabase';
+import { uploadImagemProduto, uploadImagemLoja } from '../utils/supabase';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const uploadImagem = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -234,6 +234,36 @@ router.patch('/lojas/:id', authMiddleware, authLojista, async (req: AuthRequest,
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
     res.status(500).json({ error: 'Erro ao atualizar loja' });
+  }
+});
+
+// PATCH /lojista/lojas/:id/imagem - Atualizar logo ou banner da loja
+router.patch('/lojas/:id/imagem', authMiddleware, authLojista, uploadImagem.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'banner', maxCount: 1 },
+]), async (req: AuthRequest, res) => {
+  try {
+    const loja = await verificarDonoLoja(req.params.id, req.user!.id);
+    if (!loja) return res.status(403).json({ error: 'Acesso negado' });
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const data: { logoUrl?: string; bannerUrl?: string } = {};
+
+    if (files?.logo?.[0]) {
+      data.logoUrl = await uploadImagemLoja(files.logo[0].buffer, files.logo[0].mimetype);
+    }
+    if (files?.banner?.[0]) {
+      data.bannerUrl = await uploadImagemLoja(files.banner[0].buffer, files.banner[0].mimetype);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+    }
+
+    const lojaAtualizada = await prisma.loja.update({ where: { id: req.params.id }, data });
+    res.json({ loja: lojaAtualizada });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao atualizar imagem da loja' });
   }
 });
 

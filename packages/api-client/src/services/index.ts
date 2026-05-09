@@ -1,4 +1,4 @@
-import { Loja, Produto, Pedido, EnderecoSalvo } from '@ajulabs/types';
+import { Loja, Produto, Pedido, EnderecoSalvo, EntregadorResumo } from '@ajulabs/types';
 export { matchAju } from "./consumer/aju";
 
 declare const process: { env: Record<string, string | undefined> };
@@ -69,6 +69,14 @@ function mapPedido(raw: any): Pedido {
     criadoEm: raw.criadoEm,
     atualizadoEm: raw.atualizadoEm,
     estimativaEntrega: raw.estimativaEntrega ?? undefined,
+    entregador: raw.entregador
+      ? ({
+          id: raw.entregador.id,
+          nome: raw.entregador.nome,
+          fotoUrl: raw.entregador.fotoUrl ?? null,
+          tipoTransporte: raw.entregador.tipoTransporte ?? '',
+        } as EntregadorResumo)
+      : null,
   };
 }
 
@@ -255,8 +263,13 @@ export const LojistaService = {
     imageUri: string,
   ): Promise<void> => {
     const form = new FormData();
-    const blob = await fetch(imageUri).then(r => r.blob());
-    form.append(tipo, blob, `${tipo}.jpg`);
+    // blob:/data: URIs (Expo web) precisam de fetch→blob; file:/content: (native) usam { uri, type, name }
+    if (imageUri.startsWith('blob:') || imageUri.startsWith('data:')) {
+      const blob = await fetch(imageUri).then(r => r.blob());
+      form.append(tipo, blob, `${tipo}.jpg`);
+    } else {
+      form.append(tipo, { uri: imageUri, type: 'image/jpeg', name: `${tipo}.jpg` } as any);
+    }
     const res = await fetch(`${API_URL}/lojista/lojas/${lojaId}/imagem`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
@@ -472,6 +485,138 @@ export const EntregadorService = {
     if (!res.ok) return [];
     const { entregas } = await res.json();
     return entregas ?? [];
+  },
+
+  uploadDocumentosIdentidade: async (token: string, frenteUri: string, versoUri: string): Promise<void> => {
+    const [frenteBlob, versoBlob] = await Promise.all([
+      fetch(frenteUri).then(r => r.blob()),
+      fetch(versoUri).then(r => r.blob()),
+    ]);
+    const form = new FormData();
+    form.append('frente', frenteBlob, 'frente.jpg');
+    form.append('verso',  versoBlob,  'verso.jpg');
+    const res = await fetch(`${API_URL}/entregador/documentos/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao enviar documentos');
+    }
+  },
+
+  atualizarFoto: async (token: string, imageUri: string): Promise<string> => {
+    const blob = await fetch(imageUri).then(r => r.blob());
+    const form = new FormData();
+    form.append('foto', blob, 'perfil.jpg');
+    const res = await fetch(`${API_URL}/entregador/foto`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao atualizar foto');
+    }
+    const { fotoUrl } = await res.json();
+    return fotoUrl;
+  },
+
+  cadastrarVeiculo: async (
+    token: string,
+    dados: { placa: string; modelo: string; cor: string; ano: number }
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/entregador/veiculo`, {
+      method: 'POST',
+      headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao salvar veículo');
+    }
+  },
+
+  atualizarDadosBancarios: async (
+    token: string,
+    dados: { tipo: 'pix' | 'conta'; chavePix?: string; banco?: string; agencia?: string; conta?: string }
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/entregador/dados-bancarios`, {
+      method: 'POST',
+      headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao salvar dados bancários');
+    }
+  },
+
+  atualizarDadosPessoais: async (token: string, dados: { nome?: string; email?: string; telefone?: string }): Promise<void> => {
+    const res = await fetch(`${API_URL}/entregador/dados-pessoais`, {
+      method: 'PATCH',
+      headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao atualizar dados');
+    }
+  },
+
+  alterarSenha: async (token: string, senhaAtual: string, novaSenha: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/entregador/senha`, {
+      method: 'PATCH',
+      headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senhaAtual, novaSenha }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao alterar senha');
+    }
+  },
+
+  buscarSolicitacaoTrocaVeiculo: async (token: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/entregador/veiculo/trocar`, {
+      headers: authHeader(token),
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return d.solicitacao ?? null;
+  },
+
+  solicitarTrocaVeiculo: async (
+    token: string,
+    dados: { tipoTransporte: 'bike' | 'moto' | 'carro'; modelo: string; placa: string; cor: string; ano: number },
+    files?: { cnhUri?: string; docVeiculoUri?: string }
+  ): Promise<{ status: 'aprovado' | 'pendente' }> => {
+    const form = new FormData();
+    form.append('tipoTransporte', dados.tipoTransporte);
+    form.append('modelo', dados.modelo);
+    form.append('placa', dados.placa);
+    form.append('cor', dados.cor);
+    form.append('ano', String(dados.ano));
+
+    if (files?.cnhUri) {
+      const ext = files.cnhUri.split('.').pop() ?? 'jpg';
+      form.append('cnh', { uri: files.cnhUri, type: `image/${ext}`, name: `cnh.${ext}` } as any);
+    }
+    if (files?.docVeiculoUri) {
+      const ext = files.docVeiculoUri.split('.').pop() ?? 'jpg';
+      form.append('docVeiculo', { uri: files.docVeiculoUri, type: `image/${ext}`, name: `doc.${ext}` } as any);
+    }
+
+    const res = await fetch(`${API_URL}/entregador/veiculo/trocar`, {
+      method: 'POST',
+      headers: { ...authHeader(token) },
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : 'Erro ao enviar solicitação');
+    }
+    return res.json();
   },
 };
 

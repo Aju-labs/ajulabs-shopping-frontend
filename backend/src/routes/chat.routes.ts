@@ -175,8 +175,12 @@ router.post('/mensagem', async (req: Request, res: Response) => {
     res.json(resposta);
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
-    console.error(error);
-    res.status(500).json({ texto: 'Eita, tive um probleminha aqui. Tenta de novo!' });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[chat/mensagem]', msg);
+    res.status(500).json({
+      texto: 'Eita, tive um probleminha aqui. Tenta de novo!',
+      ...(process.env.NODE_ENV !== 'production' && { debug: msg }),
+    });
   }
 });
 

@@ -157,7 +157,7 @@ router.post('/entregador/login', async (req, res) => {
     res.json({
       token,
       refreshToken,
-      entregador: { id: entregador.id, nome: entregador.nome, email: entregador.email, statusConta: entregador.statusConta },
+      entregador: { id: entregador.id, nome: entregador.nome, email: entregador.email, statusConta: entregador.statusConta, fotoUrl: entregador.fotoUrl ?? null },
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });

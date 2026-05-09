@@ -23,11 +23,13 @@ interface AuthEntregadorState {
   nome: string | null;
   email: string | null;
   entregadorId: string | null;
+  fotoUrl: string | null;
   hydrated: boolean;
   login: (cpf: string, senha: string) => Promise<void>;
   registrar: (dados: DadosRegistro) => Promise<void>;
   logout: () => void;
   hydrate: () => Promise<void>;
+  setFotoUrl: (url: string) => Promise<void>;
 }
 
 async function salvarSessao(token: string, entregador: any) {
@@ -48,6 +50,7 @@ export const useAuthEntregadorStore = create<AuthEntregadorState>((set, get) => 
   nome: null,
   email: null,
   entregadorId: null,
+  fotoUrl: null,
   hydrated: false,
 
   hydrate: async () => {
@@ -64,6 +67,7 @@ export const useAuthEntregadorStore = create<AuthEntregadorState>((set, get) => 
           nome:         entregador.nome ?? null,
           cpf:          entregador.cpf ?? null,
           email:        entregador.email ?? null,
+          fotoUrl:      entregador.fotoUrl ?? null,
         });
       }
     } catch {
@@ -90,6 +94,7 @@ export const useAuthEntregadorStore = create<AuthEntregadorState>((set, get) => 
       token:        data.token,
       entregadorId: data.entregador.id,
       nome:         data.entregador.nome,
+      fotoUrl:      data.entregador.fotoUrl ?? null,
       cpf,
     });
   },
@@ -126,6 +131,16 @@ export const useAuthEntregadorStore = create<AuthEntregadorState>((set, get) => 
       nome: null,
       email: null,
       entregadorId: null,
+      fotoUrl: null,
     });
+  },
+
+  setFotoUrl: async (url: string) => {
+    const sessionRaw = await AsyncStorage.getItem(SESSION_KEY).catch(() => null);
+    if (sessionRaw) {
+      const session = JSON.parse(sessionRaw);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, fotoUrl: url }));
+    }
+    set({ fotoUrl: url });
   },
 }));

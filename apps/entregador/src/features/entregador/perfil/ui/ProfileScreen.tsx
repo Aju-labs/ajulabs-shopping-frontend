@@ -8,39 +8,33 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Modal,
   Linking,
+  Image,
+  Modal,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { EntregadorService } from '@ajulabs/api-client';
 import { useAuthEntregadorStore } from '../../auth/model/store';
 
-function Stars({ value }: { value: number }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 1 }}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <Ionicons
-          key={i}
-          name={i < Math.floor(value) ? 'star' : 'star-outline'}
-          size={12}
-          color="#F2760F"
-        />
-      ))}
-    </View>
-  );
-}
+
+export type PerfilNavDestino = 'documentos' | 'veiculo' | 'dados-bancarios' | 'notificacoes' | 'seguranca';
 
 interface ProfileScreenProps {
   onLogout: () => void;
+  onNavigate: (dest: PerfilNavDestino) => void;
 }
 
-export function ProfileScreen({ onLogout }: ProfileScreenProps) {
+export function ProfileScreen({ onLogout, onNavigate }: ProfileScreenProps) {
   const token = useAuthEntregadorStore(s => s.token);
   const nomeStore = useAuthEntregadorStore(s => s.nome);
+  const fotoUrl = useAuthEntregadorStore(s => s.fotoUrl);
+  const setFotoUrl = useAuthEntregadorStore(s => s.setFotoUrl);
 
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState<any>(null);
   const [ganhos, setGanhos] = useState<any>(null);
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -50,47 +44,50 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
     ]).then(([p, g]) => {
       setPerfil(p);
       setGanhos(g);
+      // Sync fotoUrl: usa o retorno da API como fonte de verdade
+      const apiFoto = p?.entregador?.fotoUrl ?? null;
+      if (apiFoto && apiFoto !== fotoUrl) setFotoUrl(apiFoto);
     }).finally(() => setLoading(false));
   }, [token]);
+
+  const handleTrocarFoto = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Permita o acesso à galeria para trocar a foto.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    if (!token) return;
+    try {
+      const url = await EntregadorService.atualizarFoto(token, result.assets[0].uri);
+      await setFotoUrl(url);
+    } catch {
+      Alert.alert('Erro', 'Não foi possível atualizar a foto. Tente novamente.');
+    }
+  }, [token, setFotoUrl]);
 
   const handleMenuPress = useCallback((label: string) => {
     switch (label) {
       case 'Documentos':
-        Alert.alert(
-          'Documentos',
-          perfil?.onboarding?.documentosAprovados
-            ? 'Seus documentos foram verificados e aprovados.'
-            : 'Seus documentos estão em análise. Aguarde a aprovação em até 24 horas.',
-          [{ text: 'OK' }]
-        );
+        onNavigate('documentos');
         break;
-      case 'Dados bancários': {
-        const pix = perfil?.entregador?.pix;
-        Alert.alert(
-          'Dados bancários',
-          pix
-            ? `Chave Pix cadastrada:\n${pix}`
-            : 'Nenhuma chave Pix cadastrada. Entre em contato com o suporte para atualizar seus dados bancários.',
-          [{ text: 'OK' }]
-        );
+      case 'Veículo':
+        onNavigate('veiculo');
         break;
-      }
+      case 'Dados bancários':
+        onNavigate('dados-bancarios');
+        break;
       case 'Notificações':
-        Alert.alert(
-          'Notificações',
-          'Gerencie suas preferências de notificação nas configurações do sistema.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Abrir configurações', onPress: () => Linking.openSettings() },
-          ]
-        );
+        onNavigate('notificacoes');
         break;
       case 'Segurança':
-        Alert.alert(
-          'Segurança',
-          'Para alterar sua senha, entre em contato com o suporte ou use a opção de recuperação de senha na tela de login.',
-          [{ text: 'OK' }]
-        );
+        onNavigate('seguranca');
         break;
       case 'Ajuda e suporte':
         Alert.alert(
@@ -104,21 +101,33 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
         );
         break;
     }
-  }, [perfil]);
+  }, [perfil, onNavigate]);
 
   const menuItems = [
     { icon: 'document-text', label: 'Documentos', extra: perfil?.onboarding?.documentosAprovados ? 'Verificado' : undefined, extraColor: '#039855' },
-    { icon: 'wallet', label: 'Dados bancários' },
+    { icon: 'car-sport',     label: 'Veículo',     extra: perfil?.entregador?.veiculo ? perfil.entregador.veiculo.modelo : undefined, extraColor: '#9099B3' },
+    { icon: 'wallet',        label: 'Dados bancários' },
     { icon: 'notifications', label: 'Notificações' },
     { icon: 'shield-checkmark', label: 'Segurança' },
-    { icon: 'help-circle', label: 'Ajuda e suporte' },
+    { icon: 'help-circle',   label: 'Ajuda e suporte' },
   ] as const;
 
   const nome = perfil?.entregador?.nome ?? nomeStore ?? 'Entregador';
   const initials = nome.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-  const veiculo = perfil?.entregador?.veiculo;
-  const veiculoStr = veiculo ? `${veiculo.modelo} · ${veiculo.placa}` : 'Veículo não cadastrado';
+
+  const veiculo        = perfil?.entregador?.veiculo;
+  const tipoTransporte = (perfil?.entregador?.tipoTransporte ?? 'moto') as 'moto' | 'carro' | 'bike';
+  const veiculoLabel   = veiculo
+    ? veiculo.placa !== 'BICICLETA'
+      ? `${veiculo.modelo} · ${veiculo.placa}`
+      : 'Bicicleta'
+    : null;
+
+  // Foto: prefer API data (synced to store), fallback to store
+  const fotoPerfil    = fotoUrl ?? perfil?.entregador?.fotoUrl ?? null;
   const totalEntregas = ganhos?.allTime?.corridas ?? 0;
+  const ganhoTotal    = ganhos?.allTime?.total ? `R$${Number(ganhos.allTime.total).toFixed(0)}` : 'R$0';
+  const corridasSemana = ganhos?.semana?.corridas ?? 0;
 
   return (
     <SafeAreaView style={s.safeArea}>
@@ -129,15 +138,27 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
       >
         <View style={s.hero}>
           <View style={s.heroRow}>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{initials}</Text>
-            </View>
+            <TouchableOpacity style={s.avatar} onPress={handleTrocarFoto} activeOpacity={0.8}>
+              {fotoPerfil ? (
+                <Image source={{ uri: fotoPerfil }} style={s.avatarImg} />
+              ) : (
+                <Text style={s.avatarText}>{initials}</Text>
+              )}
+              <View style={s.avatarEdit}>
+                <Ionicons name="camera" size={10} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={s.heroName}>{nome}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                <Ionicons name="car-sport" size={12} color="rgba(255,255,255,0.7)" />
-                <Text style={s.heroTransporte}>{veiculoStr}</Text>
-              </View>
+              {veiculoLabel ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                  {tipoTransporte === 'moto'
+                    ? <MaterialCommunityIcons name="motorbike" size={13} color="rgba(255,255,255,0.7)" />
+                    : <Ionicons name={tipoTransporte === 'bike' ? 'bicycle' : 'car'} size={12} color="rgba(255,255,255,0.7)" />
+                  }
+                  <Text style={s.heroTransporte}>{veiculoLabel}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -153,14 +174,12 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
               </View>
               <View style={s.statDivider} />
               <View style={s.statCol}>
-                <Text style={s.statVal}>{ganhos?.semana?.corridas ?? 0}</Text>
+                <Text style={s.statVal}>{corridasSemana}</Text>
                 <Text style={s.statLabel}>Esta semana</Text>
               </View>
               <View style={s.statDivider} />
               <View style={s.statCol}>
-                <Text style={s.statVal}>
-                  {ganhos?.allTime?.total ? `R$${Number(ganhos.allTime.total).toFixed(0)}` : 'R$0'}
-                </Text>
+                <Text style={s.statVal}>{ganhoTotal}</Text>
                 <Text style={s.statLabel}>Total ganho</Text>
               </View>
             </View>
@@ -182,9 +201,9 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
                 <Ionicons name={item.icon as any} size={18} color="#000933" />
               </View>
               <Text style={s.menuLabel}>{item.label}</Text>
-              {item.extra && (
+              {'extra' in item && item.extra && (
                 <View style={[s.extraBadge, { backgroundColor: 'rgba(3,152,85,0.1)' }]}>
-                  <Text style={[s.extraText, { color: item.extraColor }]}>{item.extra}</Text>
+                  <Text style={[s.extraText, { color: (item as any).extraColor }]}>{item.extra}</Text>
                 </View>
               )}
               <Ionicons name="chevron-forward" size={16} color="#9099B3" />
@@ -192,12 +211,30 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
           ))}
         </View>
 
-        <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.8}>
+        <TouchableOpacity style={s.logoutBtn} onPress={() => setLogoutVisible(true)} activeOpacity={0.8}>
           <Text style={s.logoutText}>Sair</Text>
         </TouchableOpacity>
 
         <Text style={s.version}>AjuLabs · Entregador v1.0</Text>
       </ScrollView>
+
+      <Modal visible={logoutVisible} transparent animationType="fade" onRequestClose={() => setLogoutVisible(false)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalBox}>
+            <View style={s.modalIconWrap}>
+              <Ionicons name="log-out-outline" size={28} color="#E14B3C" />
+            </View>
+            <Text style={s.modalTitle}>Sair da conta</Text>
+            <Text style={s.modalMsg}>Tem certeza que deseja sair da sua conta?</Text>
+            <TouchableOpacity style={s.modalBtnSair} onPress={() => { setLogoutVisible(false); onLogout(); }} activeOpacity={0.8}>
+              <Text style={s.modalBtnSairText}>Sim, quero sair</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.modalBtnCancel} onPress={() => setLogoutVisible(false)} activeOpacity={0.8}>
+              <Text style={s.modalBtnCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -221,6 +258,20 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: '#F2760F',
+  },
+  avatarImg: { width: 64, height: 64, borderRadius: 32 },
+  avatarEdit: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F2760F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#000933',
   },
   avatarText: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
   heroName: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.3 },
@@ -274,4 +325,47 @@ const s = StyleSheet.create({
   },
   logoutText: { fontSize: 14, fontWeight: '600', color: '#E14B3C' },
   version: { textAlign: 'center', fontSize: 10, color: '#9099B3', letterSpacing: 0.5 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FDECEA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#000933', marginBottom: 6 },
+  modalMsg: { fontSize: 13, color: '#9099B3', textAlign: 'center', marginBottom: 22, lineHeight: 19 },
+  modalBtnSair: {
+    width: '100%',
+    backgroundColor: '#E14B3C',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalBtnSairText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  modalBtnCancel: {
+    width: '100%',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E4E7F1',
+  },
+  modalBtnCancelText: { fontSize: 14, fontWeight: '600', color: '#000933' },
 });

@@ -41,11 +41,18 @@ export function VitrinesList({ dark = false }: VitrinasListProps) {
   const surface   = dark ? colors.surfDark : colors.n0;
   const border    = dark ? 'rgba(255,255,255,0.06)' : colors.n200;
 
+  const normCategoria = (s: string) =>
+    s.toLowerCase()
+      .replace(/[àáâãä]/g, 'a').replace(/[èéêë]/g, 'e')
+      .replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o')
+      .replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c')
+      .replace(/\s+/g, '');
+
   const lojasFiltradas = lojas.filter(l => {
     const buscaOk = busca === '' ||
       l.nome.toLowerCase().includes(busca.toLowerCase()) ||
       l.endereco.bairro.toLowerCase().includes(busca.toLowerCase());
-    const categoriaOk = categoria === 'todos' || l.categoria === categoria;
+    const categoriaOk = categoria === 'todos' || normCategoria(l.categoria) === categoria;
     return buscaOk && categoriaOk;
   });
 

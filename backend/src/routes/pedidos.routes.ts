@@ -124,6 +124,9 @@ router.get('/:id', authMiddleware, authUsuario, async (req: AuthRequest, res) =>
         itens: { include: { produto: true } },
         historico: { orderBy: { criadoEm: 'asc' } },
         enderecoEntrega: true,
+        entregador: {
+          select: { id: true, nome: true, fotoUrl: true, tipoTransporte: true },
+        },
       },
     });
 

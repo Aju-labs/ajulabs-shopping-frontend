@@ -1,3 +1,5 @@
+export { AjuLogo } from './AjuLogo';
+
 export const colors = {
   navy:      '#000933',
   orange:    '#F2760F',

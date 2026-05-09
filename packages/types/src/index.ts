@@ -81,6 +81,13 @@ export interface ItemPedido {
   precoUnitario: number;
 }
 
+export interface EntregadorResumo {
+  id: string;
+  nome: string;
+  fotoUrl?: string | null;
+  tipoTransporte: string;
+}
+
 export interface Pedido {
   id: string;
   lojaId: string;
@@ -95,6 +102,7 @@ export interface Pedido {
   criadoEm: string;
   atualizadoEm: string;
   estimativaEntrega?: string;
+  entregador?: EntregadorResumo | null;
 }
 
 // ─── Chat ─────────────────────────────────────────────────────

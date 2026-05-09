@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, Switch, Alert, ActivityIndicator, Image,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -158,9 +158,10 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
   const lojaId = useAuthLojistaStore(s => s.lojaId);
   const logout = useAuthLojistaStore(s => s.logout);
 
-  const [loading,    setLoading]    = useState(true);
-  const [saving,     setSaving]     = useState(false);
-  const [uploading,  setUploading]  = useState<'logo' | 'banner' | null>(null);
+  const [loading,        setLoading]        = useState(true);
+  const [saving,         setSaving]         = useState(false);
+  const [uploading,      setUploading]      = useState<'logo' | 'banner' | null>(null);
+  const [logoutVisible,  setLogoutVisible]  = useState(false);
   const [horarios,   setHorarios]   = useState<HorarioDia[]>(HORARIOS_INICIAIS);
   const [logoUri,    setLogoUri]    = useState<string | null>(null);
   const [bannerUri,  setBannerUri]  = useState<string | null>(null);
@@ -215,11 +216,8 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
   }, []);
 
   const handleLogout = useCallback(() => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
-    ]);
-  }, [logout]);
+    setLogoutVisible(true);
+  }, []);
 
   const pickAndUpload = useCallback(async (tipo: 'logo' | 'banner') => {
     if (!token || !lojaId) return;
@@ -241,13 +239,10 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
 
     setUploading(tipo);
     try {
-      const form = new FormData();
-      form.append(tipo, { uri, type: 'image/jpeg', name: `${tipo}.jpg` } as any);
-
       await LojistaService.atualizarImagemLoja(lojaId, token, tipo, uri);
-    } catch {
-      Alert.alert('Erro', 'Não foi possível fazer o upload da imagem. Tente novamente.');
-      // reverte preview se falhou
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Não foi possível fazer o upload. Tente novamente.';
+      Alert.alert('Erro ao enviar imagem', msg);
       if (tipo === 'logo')   setLogoUri(null);
       else                   setBannerUri(null);
     } finally {
@@ -464,6 +459,40 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
 
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {/* Modal de confirmação de logout */}
+      <Modal
+        visible={logoutVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLogoutVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="log-out-outline" size={28} color="#E24B4A" />
+            </View>
+            <Text style={styles.modalTitle}>Sair da conta</Text>
+            <Text style={styles.modalMsg}>
+              Tem certeza que deseja sair? Você precisará fazer login novamente para acessar sua conta.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalBtnSair}
+              onPress={() => { setLogoutVisible(false); logout(); }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalBtnSairText}>Sim, quero sair</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalBtnCancel}
+              onPress={() => setLogoutVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalBtnCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -532,4 +561,15 @@ const styles = StyleSheet.create({
                       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                       gap: 8, marginTop: 10 },
   logoutBtnText:    { fontSize: 15, fontWeight: '700', color: '#E24B4A' },
+
+  // Modal de logout
+  modalOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalBox:         { width: '100%', maxWidth: 340, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, alignItems: 'center' },
+  modalIconWrap:    { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(226,75,74,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  modalTitle:       { fontSize: 18, fontWeight: '800', color: '#000933', marginBottom: 8 },
+  modalMsg:         { fontSize: 14, color: '#5A6480', textAlign: 'center', lineHeight: 21, marginBottom: 24 },
+  modalBtnSair:     { width: '100%', paddingVertical: 15, borderRadius: 14, backgroundColor: '#E24B4A', alignItems: 'center', marginBottom: 10 },
+  modalBtnSairText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  modalBtnCancel:   { width: '100%', paddingVertical: 15, borderRadius: 14, borderWidth: 1, borderColor: '#E4E7F1', alignItems: 'center' },
+  modalBtnCancelText: { fontSize: 15, fontWeight: '600', color: '#5A6480' },
 });
