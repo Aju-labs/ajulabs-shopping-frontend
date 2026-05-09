@@ -230,13 +230,13 @@ export function HomeScreen({ onAcceptRide }: HomeScreenProps) {
       </View>
 
       {!online && (
-        <View style={s.offlineOverlay}>
+        <TouchableOpacity style={s.offlineOverlay} onPress={() => toggleOnline(true)} activeOpacity={0.8}>
           <View style={s.offlineIcon}>
             <Ionicons name="power" size={32} color="#FFFFFF" />
           </View>
           <Text style={s.offlineTitle}>Em standby</Text>
-          <Text style={s.offlineSub}>Fique online pra começar a receber corridas.</Text>
-        </View>
+          <Text style={s.offlineSub}>Fique <Text style={{ color: '#F2760F', fontWeight: '700' }}>online</Text> pra começar a receber corridas.</Text>
+        </TouchableOpacity>
       )}
 
       {online && !offer && (

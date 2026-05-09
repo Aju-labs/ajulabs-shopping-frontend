@@ -8,6 +8,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useCartStore } from '../../cart/model/store';
 
@@ -123,7 +124,15 @@ export function ChatMsg({ mensagens, sugestoes, onSugestao, carregando }: Props)
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Ionicons name="bag-outline" size={28} color="#9ca3af" />
+                  {produto.imagemUrl ? (
+                    <Image
+                      source={{ uri: produto.imagemUrl }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Ionicons name="bag-outline" size={28} color="#9ca3af" />
+                  )}
                   <View style={{
                     position: 'absolute', bottom: 6, left: 6,
                     backgroundColor: '#000000aa',

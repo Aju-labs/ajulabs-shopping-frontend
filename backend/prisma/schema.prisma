@@ -56,12 +56,13 @@ model Entregador {
   criadoEm       DateTime       @default(now()) @map("criado_em")
   atualizadoEm   DateTime       @updatedAt @map("atualizado_em")
 
-  documentos     DocumentoEntregador?
-  veiculo        VeiculoEntregador?
-  dadosBancarios DadosBancariosEntregador?
-  entregas       EntregaRealizada[]
-  pedidos        Pedido[]
-  saques         SolicitacaoSaque[]
+  documentos            DocumentoEntregador?
+  veiculo               VeiculoEntregador?
+  dadosBancarios        DadosBancariosEntregador?
+  entregas              EntregaRealizada[]
+  pedidos               Pedido[]
+  saques                SolicitacaoSaque[]
+  solicitacoesTrocaVeiculo SolicitacaoTrocaVeiculo[]
 
   @@map("entregadores")
 }
@@ -117,6 +118,30 @@ model VeiculoEntregador {
   entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
 
   @@map("veiculos_entregador")
+}
+
+enum StatusTrocaVeiculo {
+  pendente
+  aprovado
+  rejeitado
+}
+
+model SolicitacaoTrocaVeiculo {
+  id             String             @id @default(uuid())
+  entregadorId   String             @map("entregador_id")
+  tipoTransporte TipoTransporte     @map("tipo_transporte")
+  modelo         String
+  placa          String
+  cor            String
+  ano            Int
+  cnhUrl         String?            @map("cnh_url")
+  docVeiculoUrl  String?            @map("doc_veiculo_url")
+  status         StatusTrocaVeiculo @default(pendente)
+  criadoEm       DateTime           @default(now()) @map("criado_em")
+
+  entregador Entregador @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+
+  @@map("solicitacoes_troca_veiculo")
 }
 
 enum TipoDadosBancarios {

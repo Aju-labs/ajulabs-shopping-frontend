@@ -5,6 +5,11 @@ import { HomeScreen } from '../src/features/entregador/home';
 import { ActiveScreen } from '../src/features/entregador/corrida-ativa';
 import { EarningsScreen } from '../src/features/entregador/ganhos';
 import { ProfileScreen } from '../src/features/entregador/perfil';
+import { DadosBancariosScreen } from '../src/features/entregador/perfil/ui/DadosBancariosScreen';
+import { DocumentosScreen } from '../src/features/entregador/perfil/ui/DocumentosScreen';
+import { NotificacoesScreen } from '../src/features/entregador/perfil/ui/NotificacoesScreen';
+import { SegurancaScreen } from '../src/features/entregador/perfil/ui/SegurancaScreen';
+import { VeiculoScreen } from '../src/features/entregador/perfil/ui/VeiculoScreen';
 import { OnboardingScreen } from '../src/features/entregador/onboarding';
 import { useAuthEntregadorStore } from '../src/store';
 
@@ -83,7 +88,7 @@ const nav = StyleSheet.create({
   },
 });
 
-type Screen = 'onboarding' | 'approval' | 'main' | 'active';
+type Screen = 'onboarding' | 'approval' | 'main' | 'active' | 'documentos' | 'veiculo' | 'dados-bancarios' | 'notificacoes' | 'seguranca';
 
 function ApprovalScreen({ onContinue }: { onContinue: () => void }) {
   return (
@@ -145,6 +150,26 @@ export function CourierApp() {
     return <ApprovalScreen onContinue={() => setScreen('main')} />;
   }
 
+  if (screen === 'documentos') {
+    return <DocumentosScreen onBack={() => setScreen('main')} />;
+  }
+
+  if (screen === 'dados-bancarios') {
+    return <DadosBancariosScreen onBack={() => setScreen('main')} />;
+  }
+
+  if (screen === 'notificacoes') {
+    return <NotificacoesScreen onBack={() => setScreen('main')} />;
+  }
+
+  if (screen === 'seguranca') {
+    return <SegurancaScreen onBack={() => setScreen('main')} />;
+  }
+
+  if (screen === 'veiculo') {
+    return <VeiculoScreen onBack={() => setScreen('main')} />;
+  }
+
   if (screen === 'active' && activeRide) {
     return (
       <ActiveScreen
@@ -170,7 +195,7 @@ export function CourierApp() {
           />
         )}
         {tab === 'ganhos' && <EarningsScreen />}
-        {tab === 'perfil' && <ProfileScreen onLogout={logout} />}
+        {tab === 'perfil' && <ProfileScreen onLogout={logout} onNavigate={(dest) => setScreen(dest)} />}
       </View>
       <CourierNav tab={tab} onChange={setTab} />
     </View>

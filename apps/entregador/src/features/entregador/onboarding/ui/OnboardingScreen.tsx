@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, Image,
+  StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthEntregadorStore } from '../../../../store';
+import { EntregadorService } from '@ajulabs/api-client';
 
 // ─── Formatadores ────────────────────────────────────────────────
 function formatCPF(v: string) {
@@ -72,25 +74,103 @@ function Field({
   );
 }
 
+// ─── Bancos e Pix ────────────────────────────────────────────────
+const PIX_TIPOS = [
+  { id: 'cpf',       label: 'CPF',       placeholder: '000.000.000-00',  keyboard: 'numeric'       as KB },
+  { id: 'email',     label: 'Email',     placeholder: 'seu@email.com',   keyboard: 'email-address' as KB },
+  { id: 'celular',   label: 'Celular',   placeholder: '(79) 9 0000-0000',keyboard: 'phone-pad'     as KB },
+  { id: 'aleatoria', label: 'Aleatória', placeholder: 'Chave aleatória', keyboard: 'default'       as KB },
+];
+
+const BANCOS = [
+  { codigo: '001', nome: 'Banco do Brasil' },
+  { codigo: '003', nome: 'Banco da Amazônia' },
+  { codigo: '004', nome: 'Banco do Nordeste' },
+  { codigo: '021', nome: 'Banestes' },
+  { codigo: '025', nome: 'Banco Alfa' },
+  { codigo: '033', nome: 'Santander' },
+  { codigo: '041', nome: 'Banrisul' },
+  { codigo: '047', nome: 'Banese' },
+  { codigo: '070', nome: 'BRB' },
+  { codigo: '077', nome: 'Banco Inter' },
+  { codigo: '085', nome: 'Via Credi' },
+  { codigo: '099', nome: 'Uniprime' },
+  { codigo: '104', nome: 'Caixa Econômica Federal' },
+  { codigo: '121', nome: 'Agibank' },
+  { codigo: '133', nome: 'Cresol' },
+  { codigo: '136', nome: 'Unicred' },
+  { codigo: '197', nome: 'Stone' },
+  { codigo: '208', nome: 'BTG Pactual' },
+  { codigo: '212', nome: 'Banco Original' },
+  { codigo: '218', nome: 'BS2' },
+  { codigo: '224', nome: 'Banco Fibra' },
+  { codigo: '237', nome: 'Bradesco' },
+  { codigo: '243', nome: 'Banco Master' },
+  { codigo: '246', nome: 'ABC Brasil' },
+  { codigo: '260', nome: 'Nubank' },
+  { codigo: '290', nome: 'PagBank' },
+  { codigo: '301', nome: 'PicPay' },
+  { codigo: '318', nome: 'Banco BMG' },
+  { codigo: '323', nome: 'Mercado Pago' },
+  { codigo: '336', nome: 'C6 Bank' },
+  { codigo: '341', nome: 'Itaú Unibanco' },
+  { codigo: '348', nome: 'XP Investimentos' },
+  { codigo: '364', nome: 'EFÍ (Gerencianet)' },
+  { codigo: '376', nome: 'JP Morgan' },
+  { codigo: '389', nome: 'Banco Mercantil' },
+  { codigo: '403', nome: 'Cora' },
+  { codigo: '422', nome: 'Banco Safra' },
+  { codigo: '456', nome: 'Sicredi' },
+  { codigo: '461', nome: 'Asaas' },
+  { codigo: '477', nome: 'Citibank' },
+  { codigo: '487', nome: 'Deutsche Bank' },
+  { codigo: '505', nome: 'Credit Suisse' },
+  { codigo: '536', nome: 'Neon' },
+  { codigo: '600', nome: 'Banco Luso Brasileiro' },
+  { codigo: '604', nome: 'Banco Industrial' },
+  { codigo: '611', nome: 'Banco Paulista' },
+  { codigo: '612', nome: 'Banco Guanabara' },
+  { codigo: '623', nome: 'Banco Pan' },
+  { codigo: '633', nome: 'Banco Rendimento' },
+  { codigo: '637', nome: 'Banco Sofisa' },
+  { codigo: '643', nome: 'Banco Pine' },
+  { codigo: '655', nome: 'Banco Votorantim' },
+  { codigo: '707', nome: 'Daycoval' },
+  { codigo: '739', nome: 'Banco Cetelem' },
+  { codigo: '745', nome: 'Citibank N.A.' },
+  { codigo: '746', nome: 'Banco Modal' },
+  { codigo: '747', nome: 'Rabobank' },
+  { codigo: '748', nome: 'Sicredi Cooperativo' },
+  { codigo: '751', nome: 'Scotiabank' },
+  { codigo: '755', nome: 'Bank of America' },
+  { codigo: '756', nome: 'Sicoob' },
+];
+
 // ─── Tipos ────────────────────────────────────────────────────────
 const TRANSPORTES = [
-  { id: 'bike',  label: 'Bicicleta', icon: 'bicycle',   rate: 'R$ 6/corrida',  desc: 'Sem placa, leve e econômico' },
-  { id: 'moto',  label: 'Moto',      icon: 'car-sport',  rate: 'R$ 10/corrida', desc: 'Rápido e mais alcance' },
-  { id: 'carro', label: 'Carro',     icon: 'car',        rate: 'R$ 14/corrida', desc: 'Para volumes maiores' },
-] as const;
+  { id: 'bike',  label: 'Bicicleta', icon: 'bicycle',    lib: 'Ionicons'              as const, rate: 'R$ 6/corrida',  desc: 'Sem placa, leve e econômico' },
+  { id: 'moto',  label: 'Moto',      icon: 'motorbike',  lib: 'MaterialCommunityIcons' as const, rate: 'R$ 10/corrida', desc: 'Rápido e mais alcance' },
+  { id: 'carro', label: 'Carro',     icon: 'car',        lib: 'Ionicons'              as const, rate: 'R$ 14/corrida', desc: 'Para volumes maiores' },
+];
 
 type Data = Record<string, string>;
 interface StepProps { data: Data; up: (k: string, v: string) => void; }
 
 // ─── Passo 1: Dados pessoais ──────────────────────────────────────
 function StepPessoal({
-  data, up, erros,
-}: StepProps & { erros: Record<string, string> }) {
+  data, up, erros, photoUri, onPickPhoto,
+}: StepProps & { erros: Record<string, string>; photoUri: string | null; onPickPhoto: () => void }) {
   return (
     <View>
-      <TouchableOpacity style={s.photoBtn} activeOpacity={0.8}>
-        <Ionicons name="camera" size={26} color="#F2760F" />
-        <Text style={s.photoBtnText}>Foto de perfil</Text>
+      <TouchableOpacity style={s.photoBtn} activeOpacity={0.8} onPress={onPickPhoto}>
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%', borderRadius: 55 }} />
+        ) : (
+          <>
+            <Ionicons name="camera" size={26} color="#F2760F" />
+            <Text style={s.photoBtnText}>Foto de perfil</Text>
+          </>
+        )}
       </TouchableOpacity>
 
       <Field label="Nome completo" error={erros.nome}>
@@ -115,25 +195,48 @@ function StepPessoal({
   );
 }
 
-// ─── Passo 2: Documentos ─────────────────────────────────────────
-function StepDocs() {
+// ─── Passo: Documentos ───────────────────────────────────────────
+interface StepDocsProps {
+  frenteUri: string | null;
+  versoUri: string | null;
+  onPickDoc: (lado: 'frente' | 'verso') => void;
+  tipoTransporte: string;
+}
+
+function StepDocs({ frenteUri, versoUri, onPickDoc, tipoTransporte }: StepDocsProps) {
+  const needsCnh = tipoTransporte !== 'bike';
+  const docNome  = needsCnh ? 'CNH' : 'RG';
+  const docs = [
+    { key: 'frente' as const, label: `${docNome} — Frente`, uri: frenteUri },
+    { key: 'verso'  as const, label: `${docNome} — Verso`,  uri: versoUri  },
+  ];
   return (
     <View>
-      <Text style={s.stepDesc}>
-        Precisamos de uma foto do seu RG ou CNH. Seus dados são criptografados.
-      </Text>
-      {['Frente do documento', 'Verso do documento'].map(label => (
-        <TouchableOpacity key={label} style={s.docBtn} activeOpacity={0.8}>
-          <View style={s.docIcon}><Ionicons name="camera" size={20} color="#F2760F" /></View>
-          <View>
-            <Text style={s.docTitle}>{label}</Text>
-            <Text style={s.docSub}>Toque pra tirar a foto</Text>
+      <View style={s.infoBox}>
+        <Ionicons name={needsCnh ? 'card' : 'id-card'} size={16} color="#209CEF" />
+        <Text style={s.infoText}>
+          {needsCnh
+            ? 'Para moto ou carro é obrigatório enviar a CNH (frente e verso).'
+            : 'Para bicicleta, envie uma foto do seu RG (frente e verso).'}
+        </Text>
+      </View>
+      {docs.map(doc => (
+        <TouchableOpacity key={doc.key} style={s.docBtn} activeOpacity={0.8} onPress={() => onPickDoc(doc.key)}>
+          {doc.uri ? (
+            <Image source={{ uri: doc.uri }} style={s.docThumb} />
+          ) : (
+            <View style={s.docIcon}><Ionicons name="camera" size={20} color="#F2760F" /></View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={s.docTitle}>{doc.label}</Text>
+            <Text style={s.docSub}>{doc.uri ? 'Toque para trocar' : 'Toque para tirar foto ou escolher da galeria'}</Text>
           </View>
+          {doc.uri && <Ionicons name="checkmark-circle" size={20} color="#039855" />}
         </TouchableOpacity>
       ))}
-      <View style={s.infoBox}>
+      <View style={[s.infoBox, { marginTop: 8 }]}>
         <Ionicons name="shield-checkmark" size={16} color="#209CEF" />
-        <Text style={s.infoText}>Análise em até 24h. Você será notificado aqui no app.</Text>
+        <Text style={s.infoText}>Análise em até 24h. Seus dados são criptografados.</Text>
       </View>
     </View>
   );
@@ -154,7 +257,10 @@ function StepTransporte({ data, up }: StepProps) {
             activeOpacity={0.85}
           >
             <View style={[s.transporteIcon, sel && { backgroundColor: '#F2760F' }]}>
-              <Ionicons name={t.icon as any} size={24} color={sel ? '#FFFFFF' : '#2A3156'} />
+              {t.lib === 'MaterialCommunityIcons'
+                ? <MaterialCommunityIcons name={t.icon as any} size={24} color={sel ? '#FFFFFF' : '#2A3156'} />
+                : <Ionicons name={t.icon as any} size={24} color={sel ? '#FFFFFF' : '#2A3156'} />
+              }
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={[s.transporteLabel, sel && { color: '#F2760F' }]}>{t.label}</Text>
@@ -182,6 +288,25 @@ function StepVeiculo({ data, up }: StepProps) {
 
 // ─── Passo 5: Bancário ───────────────────────────────────────────
 function StepBancario({ data, up }: StepProps) {
+  const [bancoModal, setBancoModal] = useState(false);
+  const [busca, setBusca] = useState('');
+
+  const pixTipo = data.pixTipo || 'cpf';
+  const tipoSel = PIX_TIPOS.find(t => t.id === pixTipo) ?? PIX_TIPOS[0];
+
+  const handlePixChange = (v: string) => {
+    if (pixTipo === 'cpf') up('pix', formatCPF(v));
+    else if (pixTipo === 'celular') up('pix', formatTel(v));
+    else up('pix', v);
+  };
+
+  const bancosFiltrados = BANCOS.filter(b =>
+    b.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    b.codigo.includes(busca)
+  );
+
+  const bancoSelecionado = BANCOS.find(b => data.banco === `${b.codigo} - ${b.nome}`);
+
   return (
     <View>
       <View style={s.pixHint}>
@@ -191,13 +316,52 @@ function StepBancario({ data, up }: StepProps) {
           <Text style={s.pixHintSub}>Saque instantâneo, sem taxa</Text>
         </View>
       </View>
+
+      {/* Seletor de tipo de chave */}
+      <Text style={[s.fieldLabel, { marginBottom: 8 }]}>Tipo de chave Pix</Text>
+      <View style={s.pixTipos}>
+        {PIX_TIPOS.map(t => {
+          const ativo = pixTipo === t.id;
+          return (
+            <TouchableOpacity
+              key={t.id}
+              style={[s.pixTipoBtn, ativo && s.pixTipoBtnActive]}
+              onPress={() => { up('pixTipo', t.id); up('pix', ''); }}
+              activeOpacity={0.8}
+            >
+              <Text style={[s.pixTipoText, ativo && s.pixTipoTextActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       <Field label="Chave Pix">
-        <Input value={data.pix || ''} onChange={v => up('pix', v)} placeholder="CPF, email ou celular" />
+        <Input
+          value={data.pix || ''}
+          onChange={handlePixChange}
+          placeholder={tipoSel.placeholder}
+          keyboardType={tipoSel.keyboard}
+        />
       </Field>
+
       <Text style={s.orLabel}>Ou conta bancária</Text>
+
       <Field label="Banco">
-        <Input value={data.banco || ''} onChange={v => up('banco', v)} placeholder="Banco do Brasil" />
+        <TouchableOpacity style={s.bankSelector} onPress={() => setBancoModal(true)} activeOpacity={0.8}>
+          {bancoSelecionado ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <View style={s.bankCodigoBadge}>
+                <Text style={s.bankCodigoBadgeText}>{bancoSelecionado.codigo}</Text>
+              </View>
+              <Text style={s.bankSelectorValue}>{bancoSelecionado.nome}</Text>
+            </View>
+          ) : (
+            <Text style={s.bankSelectorPlaceholder}>Selecione um banco</Text>
+          )}
+          <Ionicons name="chevron-down" size={16} color="#9099B3" />
+        </TouchableOpacity>
       </Field>
+
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Field label="Agência"><Input value={data.agencia || ''} onChange={v => up('agencia', v)} placeholder="0000" keyboardType="numeric" /></Field>
@@ -206,6 +370,56 @@ function StepBancario({ data, up }: StepProps) {
           <Field label="Conta"><Input value={data.conta || ''} onChange={v => up('conta', v)} placeholder="000000-0" /></Field>
         </View>
       </View>
+
+      {/* Modal de bancos */}
+      <Modal visible={bancoModal} animationType="slide" onRequestClose={() => setBancoModal(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <View style={s.bankModalHeader}>
+            <TouchableOpacity onPress={() => { setBancoModal(false); setBusca(''); }} style={s.bankModalClose}>
+              <Ionicons name="close" size={22} color="#000933" />
+            </TouchableOpacity>
+            <Text style={s.bankModalTitle}>Selecionar banco</Text>
+          </View>
+          <View style={s.bankSearchBox}>
+            <Ionicons name="search" size={16} color="#9099B3" />
+            <TextInput
+              value={busca}
+              onChangeText={setBusca}
+              placeholder="Buscar por nome ou código..."
+              placeholderTextColor="#9099B3"
+              style={s.bankSearchInput}
+              autoFocus
+            />
+            {busca.length > 0 && (
+              <TouchableOpacity onPress={() => setBusca('')} hitSlop={10}>
+                <Ionicons name="close-circle" size={16} color="#9099B3" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <FlatList
+            data={bancosFiltrados}
+            keyExtractor={item => item.codigo}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => {
+              const selecionado = data.banco === `${item.codigo} - ${item.nome}`;
+              return (
+                <TouchableOpacity
+                  style={[s.bankItem, selecionado && s.bankItemActive]}
+                  onPress={() => { up('banco', `${item.codigo} - ${item.nome}`); setBancoModal(false); setBusca(''); }}
+                  activeOpacity={0.7}
+                >
+                  <View style={s.bankCodigoBadge}>
+                    <Text style={s.bankCodigoBadgeText}>{item.codigo}</Text>
+                  </View>
+                  <Text style={[s.bankItemNome, selecionado && { color: '#F2760F', fontWeight: '700' }]}>{item.nome}</Text>
+                  {selecionado && <Ionicons name="checkmark-circle" size={20} color="#F2760F" />}
+                </TouchableOpacity>
+              );
+            }}
+            ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#F0F1F5', marginLeft: 66 }} />}
+          />
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
@@ -264,22 +478,74 @@ interface OnboardingScreenProps {
 }
 
 export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
-  const registrar = useAuthEntregadorStore(s => s.registrar);
+  const registrar  = useAuthEntregadorStore(s => s.registrar);
+  const setFotoUrl = useAuthEntregadorStore(s => s.setFotoUrl);
 
   const [step, setStep]           = useState(0);
   const [data, setData]           = useState<Data>({});
   const [erros, setErros]         = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading]     = useState(false);
+  const [photoUri, setPhotoUri]   = useState<string | null>(null);
+  const [frenteUri, setFrenteUri] = useState<string | null>(null);
+  const [versoUri, setVersoUri]   = useState<string | null>(null);
+  const [docModal, setDocModal]   = useState<'frente' | 'verso' | null>(null);
+
+  const pickDoc = (lado: 'frente' | 'verso') => setDocModal(lado);
+
+  const launchCamera = async () => {
+    const lado = docModal;
+    setDocModal(null);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Permita o acesso à câmera nas configurações.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      if (lado === 'frente') setFrenteUri(result.assets[0].uri);
+      else if (lado === 'verso') setVersoUri(result.assets[0].uri);
+    }
+  };
+
+  const launchGallery = async () => {
+    const lado = docModal;
+    setDocModal(null);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Permita o acesso à galeria nas configurações.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      if (lado === 'frente') setFrenteUri(result.assets[0].uri);
+      else if (lado === 'verso') setVersoUri(result.assets[0].uri);
+    }
+  };
+
+  const pickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
 
   const up = (k: string, v: string) => setData(d => ({ ...d, [k]: v }));
   const needsVehicle = data.transporte !== 'bike';
 
+  // Transporte vem antes de Documentos para que o label CNH/RG seja correto
   const steps = [
     { title: 'Dados pessoais' },
-    { title: 'Documentos' },
     { title: 'Transporte' },
     ...(needsVehicle ? [{ title: 'Veículo' }] : []),
+    { title: 'Documentos' },
     { title: 'Bancário' },
     { title: 'Revisão' },
   ];
@@ -288,11 +554,17 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const cur    = steps[step];
 
   const next = async () => {
-    // Valida campos obrigatórios no passo 1
+    // Valida campos obrigatórios
     if (step === 0) {
       const e = validarPasso1(data);
       if (Object.keys(e).length > 0) { setErros(e); return; }
       setErros({});
+    }
+
+    // Valida documentos obrigatórios
+    if (cur.title === 'Documentos') {
+      if (!frenteUri) { Alert.alert('Documento obrigatório', `Tire uma foto da frente do seu ${data.transporte === 'bike' ? 'RG' : 'CNH'}.`); return; }
+      if (!versoUri)  { Alert.alert('Documento obrigatório', `Tire uma foto do verso do seu ${data.transporte === 'bike' ? 'RG' : 'CNH'}.`); return; }
     }
 
     if (!isLast) { setStep(s => s + 1); return; }
@@ -310,6 +582,56 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         senha:          data.senha,
         tipoTransporte: (data.transporte || 'moto') as 'bike' | 'moto' | 'carro',
       });
+      const currentToken = useAuthEntregadorStore.getState().token;
+
+      // Salvar veículo
+      if (currentToken) {
+        if (data.transporte === 'bike') {
+          await EntregadorService.cadastrarVeiculo(currentToken, {
+            placa:  'BICICLETA',
+            modelo: 'Bicicleta',
+            cor:    (data.cor || 'Não informado').trim(),
+            ano:    parseInt(data.ano) || new Date().getFullYear(),
+          }).catch(() => {});
+        } else if (data.placa && data.modelo) {
+          await EntregadorService.cadastrarVeiculo(currentToken, {
+            placa:  data.placa.trim(),
+            modelo: data.modelo.trim(),
+            cor:    (data.cor || 'Não informado').trim(),
+            ano:    parseInt(data.ano) || new Date().getFullYear(),
+          }).catch(() => {});
+        }
+      }
+
+      // Salvar dados bancários
+      if (currentToken && (data.pix || data.banco)) {
+        const hasPix   = !!data.pix;
+        const temConta = !hasPix && !!data.banco && !!data.agencia && !!data.conta;
+        if (hasPix) {
+          await EntregadorService.atualizarDadosBancarios(currentToken, {
+            tipo: 'pix',
+            chavePix: data.pix,
+          }).catch(() => {});
+        } else if (temConta) {
+          await EntregadorService.atualizarDadosBancarios(currentToken, {
+            tipo: 'conta',
+            banco:   data.banco,
+            agencia: data.agencia,
+            conta:   data.conta,
+          }).catch(() => {});
+        }
+      }
+
+      // Upload dos documentos de identidade
+      if (currentToken && frenteUri && versoUri) {
+        await EntregadorService.uploadDocumentosIdentidade(currentToken, frenteUri, versoUri).catch(() => {});
+      }
+
+      // Upload da foto de perfil após o registro (token já disponível no store)
+      if (photoUri && currentToken) {
+        const url = await EntregadorService.atualizarFoto(currentToken, photoUri);
+        await setFotoUrl(url);
+      }
       onDone('submitted');
     } catch (e: any) {
       setSubmitError(e?.message ?? 'Erro ao cadastrar. Tente novamente.');
@@ -345,8 +667,8 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
 
       {/* Conteúdo */}
       <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {cur.title === 'Dados pessoais' && <StepPessoal data={data} up={up} erros={erros} />}
-        {cur.title === 'Documentos'     && <StepDocs />}
+        {cur.title === 'Dados pessoais' && <StepPessoal data={data} up={up} erros={erros} photoUri={photoUri} onPickPhoto={pickPhoto} />}
+        {cur.title === 'Documentos'     && <StepDocs frenteUri={frenteUri} versoUri={versoUri} onPickDoc={pickDoc} tipoTransporte={data.transporte || 'moto'} />}
         {cur.title === 'Transporte'     && <StepTransporte data={data} up={up} />}
         {cur.title === 'Veículo'        && <StepVeiculo data={data} up={up} />}
         {cur.title === 'Bancário'       && <StepBancario data={data} up={up} />}
@@ -366,6 +688,45 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           }
         </TouchableOpacity>
       </View>
+
+      {/* Modal seleção de foto de documento */}
+      <Modal visible={docModal !== null} transparent animationType="slide" onRequestClose={() => setDocModal(null)}>
+        <TouchableOpacity style={s.modalBackdrop} activeOpacity={1} onPress={() => setDocModal(null)}>
+          <View style={s.modalSheet}>
+            <View style={s.modalHandle} />
+            <Text style={s.modalTitle}>
+              {docModal === 'frente' ? 'Frente do documento' : 'Verso do documento'}
+            </Text>
+            <Text style={s.modalSub}>Escolha como deseja enviar a foto</Text>
+
+            <TouchableOpacity style={s.modalOption} activeOpacity={0.8} onPress={launchCamera}>
+              <View style={s.modalOptionIcon}>
+                <Ionicons name="camera" size={24} color="#F2760F" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.modalOptionTitle}>Tirar foto</Text>
+                <Text style={s.modalOptionSub}>Abrir câmera do celular</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9099B3" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={s.modalOption} activeOpacity={0.8} onPress={launchGallery}>
+              <View style={s.modalOptionIcon}>
+                <Ionicons name="images" size={24} color="#F2760F" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.modalOptionTitle}>Escolher da galeria</Text>
+                <Text style={s.modalOptionSub}>Selecionar foto existente</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9099B3" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={s.modalCancel} onPress={() => setDocModal(null)} activeOpacity={0.8}>
+              <Text style={s.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -402,8 +763,9 @@ const s = StyleSheet.create({
   photoBtnText: { fontSize: 11, color: '#F2760F', fontWeight: '600' },
   stepDesc:     { fontSize: 13, color: '#9099B3', lineHeight: 19, marginBottom: 18 },
 
-  docBtn:  { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, borderWidth: 2, borderColor: '#E4E7F1', borderStyle: 'dashed', backgroundColor: '#F6F7FB', marginBottom: 10 },
-  docIcon: { width: 42, height: 42, borderRadius: 10, backgroundColor: '#FEF0E3', alignItems: 'center', justifyContent: 'center' },
+  docBtn:   { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, borderWidth: 2, borderColor: '#E4E7F1', borderStyle: 'dashed', backgroundColor: '#F6F7FB', marginBottom: 10 },
+  docIcon:  { width: 42, height: 42, borderRadius: 10, backgroundColor: '#FEF0E3', alignItems: 'center', justifyContent: 'center' },
+  docThumb: { width: 42, height: 42, borderRadius: 10 },
   docTitle:{ fontSize: 14, fontWeight: '600', color: '#000933' },
   docSub:  { fontSize: 11, color: '#9099B3', marginTop: 2 },
   infoBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, backgroundColor: 'rgba(32,156,239,0.08)', borderRadius: 10, marginTop: 8 },
@@ -420,6 +782,27 @@ const s = StyleSheet.create({
   pixHintSub:  { fontSize: 11, color: '#046C2E', opacity: 0.85 },
   orLabel:     { fontSize: 11, fontWeight: '600', color: '#9099B3', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10, marginTop: 6 },
 
+  pixTipos:         { flexDirection: 'row', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
+  pixTipoBtn:       { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1.5, borderColor: '#E4E7F1', backgroundColor: '#F6F7FB' },
+  pixTipoBtnActive: { borderColor: '#F2760F', backgroundColor: 'rgba(242,118,15,0.08)' },
+  pixTipoText:      { fontSize: 13, fontWeight: '600', color: '#9099B3' },
+  pixTipoTextActive:{ color: '#F2760F' },
+
+  bankSelector:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: '#E4E7F1', backgroundColor: '#F6F7FB' },
+  bankSelectorValue:     { flex: 1, fontSize: 15, color: '#000933', fontWeight: '500' },
+  bankSelectorPlaceholder:{ flex: 1, fontSize: 15, color: '#9099B3' },
+  bankCodigoBadge:       { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: '#E4E7F1' },
+  bankCodigoBadgeText:   { fontSize: 11, fontWeight: '700', color: '#2A3156' },
+
+  bankModalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderBottomWidth: 1, borderBottomColor: '#E4E7F1' },
+  bankModalClose:  { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F6F7FB', alignItems: 'center', justifyContent: 'center' },
+  bankModalTitle:  { fontSize: 17, fontWeight: '700', color: '#000933' },
+  bankSearchBox:   { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 12, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, borderWidth: 1.5, borderColor: '#E4E7F1', backgroundColor: '#F6F7FB' },
+  bankSearchInput: { flex: 1, fontSize: 15, color: '#000933' },
+  bankItem:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
+  bankItemActive:  { backgroundColor: 'rgba(242,118,15,0.05)' },
+  bankItemNome:    { flex: 1, fontSize: 14, color: '#000933', fontWeight: '500' },
+
   reviewHero:  { padding: 18, borderRadius: 16, backgroundColor: '#000933', marginBottom: 14 },
   reviewTitle: { fontSize: 22, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.4 },
   reviewSub:   { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, lineHeight: 18 },
@@ -429,4 +812,16 @@ const s = StyleSheet.create({
 
   tipBox:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, backgroundColor: '#FEF0E3', borderRadius: 12, marginTop: 14 },
   tipText: { flex: 1, fontSize: 12, color: '#F2760F', lineHeight: 18 },
+
+  modalBackdrop:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalSheet:        { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36 },
+  modalHandle:       { width: 40, height: 4, borderRadius: 99, backgroundColor: '#E4E7F1', alignSelf: 'center', marginBottom: 18 },
+  modalTitle:        { fontSize: 17, fontWeight: '700', color: '#000933', marginBottom: 4 },
+  modalSub:          { fontSize: 13, color: '#9099B3', marginBottom: 20 },
+  modalOption:       { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#E4E7F1', backgroundColor: '#F6F7FB', marginBottom: 10 },
+  modalOptionIcon:   { width: 48, height: 48, borderRadius: 12, backgroundColor: '#FEF0E3', alignItems: 'center', justifyContent: 'center' },
+  modalOptionTitle:  { fontSize: 15, fontWeight: '600', color: '#000933' },
+  modalOptionSub:    { fontSize: 12, color: '#9099B3', marginTop: 2 },
+  modalCancel:       { marginTop: 6, padding: 14, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#E4E7F1' },
+  modalCancelText:   { fontSize: 14, fontWeight: '600', color: '#9099B3' },
 });

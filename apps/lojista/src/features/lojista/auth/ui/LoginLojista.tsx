@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { colors } from '@ajulabs/theme';
+import { colors, AjuLogo } from '@ajulabs/theme';
 import { useAuthLojistaStore } from '../model/store';
 
 interface LoginLojistaProps {
@@ -226,8 +226,8 @@ export function LoginLojista({ onLoginSuccess }: LoginLojistaProps) {
     <View style={styles.container}>
       {/* Topo navy */}
       <View style={styles.top}>
-        <View style={styles.logoWrap}>
-          <Text style={styles.logoText}>A</Text>
+        <View style={{ marginBottom: 16 }}>
+          <AjuLogo size={52} />
         </View>
         <Text style={styles.topTitle}>Portal do Lojista</Text>
         <Text style={styles.topSub}>Venda no Shopping Digital em minutos.</Text>
@@ -309,10 +309,6 @@ const styles = StyleSheet.create({
   // Topo
   top:                 { paddingTop: 52, paddingBottom: 28, paddingHorizontal: 24,
                          alignItems: 'center' },
-  logoWrap:            { width: 52, height: 52, borderRadius: 14,
-                         backgroundColor: colors.orange,
-                         alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  logoText:            { fontSize: 28, fontWeight: '800', color: '#fff' },
   topTitle:            { fontSize: 26, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   topSub:              { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 6 },
 
