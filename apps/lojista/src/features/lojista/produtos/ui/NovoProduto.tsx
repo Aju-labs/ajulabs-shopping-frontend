@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  StyleSheet, ActivityIndicator, Alert, Image,
+  StyleSheet, ActivityIndicator, Alert, Image, Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -178,6 +178,22 @@ function EditStage({
 }) {
   const [newTag, setNewTag] = useState('');
   const [imgLoading, setImgLoading] = useState(true);
+  const [showVariacoes, setShowVariacoes] = useState(false);
+
+  const cat = data.categoria.toLowerCase();
+  const isVestuario = ['roupa', 'camisa', 'camiseta', 'blusa', 'calça', 'saia', 'vestido',
+    'moletom', 'jaqueta', 'casaco', 'shorts', 'bermuda', 'malha', 'moda', 'vestuário',
+    'vestuario', 'polo', 'regata', 'colete', 'pijama'].some(k => cat.includes(k));
+  const isCalcado = ['calçado', 'calcado', 'sapato', 'tênis', 'tenis', 'sandália', 'sandalia',
+    'bota', 'chinelo', 'sapatilha', 'mocassim', 'salto', 'scarpin'].some(k => cat.includes(k));
+
+  const sizesDisponiveis = isVestuario
+    ? ['PP', 'P', 'M', 'G', 'GG', 'GGG']
+    : isCalcado
+    ? ['33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44']
+    : ['PP', 'P', 'M', 'G', 'GG', '38', '39', '40', '41', '42'];
+
+  const exibirVariacoes = isVestuario || isCalcado || showVariacoes;
 
   const addTag = useCallback(() => {
     if (!newTag.trim()) return;
@@ -295,32 +311,48 @@ function EditStage({
         </View>
       </View>
 
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Variações (tamanhos)</Text>
-        <View style={styles.variacoesWrap}>
-          {['PP', 'P', 'M', 'G', 'GG', '38', '39', '40', '41', '42'].map(v => {
-            const selected = data.variacoes.includes(v);
-            return (
-              <TouchableOpacity
-                key={v}
-                onPress={() => {
-                  const next = selected
-                    ? data.variacoes.filter(x => x !== v)
-                    : [...data.variacoes, v];
-                  onChange('variacoes', next);
-                }}
-                style={[
-                  styles.variacaoBtn,
-                  selected && { backgroundColor: colors.navy, borderColor: colors.navy },
-                ]}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.variacaoText, selected && { color: '#fff' }]}>{v}</Text>
-              </TouchableOpacity>
-            );
-          })}
+      {exibirVariacoes ? (
+        <View style={styles.fieldGroup}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.fieldLabel}>Variações (tamanhos)</Text>
+            <TouchableOpacity onPress={() => { setShowVariacoes(false); onChange('variacoes', []); }} activeOpacity={0.7}>
+              <Text style={{ fontSize: 11, color: colors.n500 }}>Remover</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.variacoesWrap}>
+            {sizesDisponiveis.map(v => {
+              const selected = data.variacoes.includes(v);
+              return (
+                <TouchableOpacity
+                  key={v}
+                  onPress={() => {
+                    const next = selected
+                      ? data.variacoes.filter(x => x !== v)
+                      : [...data.variacoes, v];
+                    onChange('variacoes', next);
+                  }}
+                  style={[
+                    styles.variacaoBtn,
+                    selected && { backgroundColor: colors.navy, borderColor: colors.navy },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.variacaoText, selected && { color: '#fff' }]}>{v}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.addVariacoesBtn}
+          onPress={() => setShowVariacoes(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add-circle-outline" size={16} color={colors.n500} />
+          <Text style={styles.addVariacoesTxt}>Adicionar variações de tamanho</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={[styles.publishBtn, saving && { opacity: 0.7 }]}
@@ -347,6 +379,8 @@ export function NovoProduto({ dark = false, onPublicar, onVoltar }: NovoProdutoP
   const [stage, setStage] = useState<Stage>('capture');
   const [saving, setSaving] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [publishedName, setPublishedName] = useState('');
   const [productData, setProductData] = useState<ProductData>({
     nome: '',
     categoria: '',
@@ -420,19 +454,8 @@ export function NovoProduto({ dark = false, onPublicar, onVoltar }: NovoProdutoP
         imageUri: imageUri ?? undefined,
       });
       onPublicar?.(productData);
-      Alert.alert('Produto publicado!', `"${productData.nome}" foi adicionado à sua vitrine.`, [
-        {
-          text: 'OK', onPress: () => {
-            if (onVoltar) {
-              onVoltar();
-            } else {
-              setStage('capture');
-              setImageUri(null);
-              setProductData({ nome: '', categoria: '', descricao: '', tags: [], preco: '', estoque: '', variacoes: [] });
-            }
-          },
-        },
-      ]);
+      setPublishedName(productData.nome);
+      setShowSuccess(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Erro ao publicar produto.';
       Alert.alert('Erro', msg);
@@ -440,6 +463,17 @@ export function NovoProduto({ dark = false, onPublicar, onVoltar }: NovoProdutoP
       setSaving(false);
     }
   }, [token, lojaId, productData, imageUri, onPublicar]);
+
+  const handleSuccessOk = useCallback(() => {
+    setShowSuccess(false);
+    if (onVoltar) {
+      onVoltar();
+    } else {
+      setStage('capture');
+      setImageUri(null);
+      setProductData({ nome: '', categoria: '', descricao: '', tags: [], preco: '', estoque: '', variacoes: [] });
+    }
+  }, [onVoltar]);
 
   const isEdit = stage === 'edit';
 
@@ -480,6 +514,24 @@ export function NovoProduto({ dark = false, onPublicar, onVoltar }: NovoProdutoP
           imageUri={imageUri}
         />
       )}
+
+      <Modal visible={showSuccess} transparent animationType="fade" onRequestClose={handleSuccessOk}>
+        <View style={styles.successOverlay}>
+          <View style={styles.successBox}>
+            <View style={styles.successIconWrap}>
+              <Ionicons name="checkmark-circle" size={56} color="#F2760F" />
+            </View>
+            <Text style={styles.successTitle}>Produto publicado!</Text>
+            <Text style={styles.successMsg}>
+              <Text style={{ fontWeight: '700' }}>"{publishedName}"</Text>
+              {' foi adicionado à sua vitrine com sucesso.'}
+            </Text>
+            <TouchableOpacity style={styles.successBtn} onPress={handleSuccessOk} activeOpacity={0.8}>
+              <Text style={styles.successBtnText}>Continuar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -579,7 +631,22 @@ const styles = StyleSheet.create({
                         backgroundColor: '#F4F5FA', borderWidth: 1, borderColor: '#E4E7F1',
                         alignItems: 'center', justifyContent: 'center' },
   variacaoText:       { fontSize: 12, fontWeight: '700', color: '#000933' },
+  addVariacoesBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6,
+                        paddingVertical: 10, paddingHorizontal: 2 },
+  addVariacoesTxt:    { fontSize: 13, color: colors.n500 },
   publishBtn:         { height: 50, borderRadius: 14, backgroundColor: '#F2760F',
                         alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   publishBtnText:     { fontSize: 15, fontWeight: '700', color: '#fff' },
+  successOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+                        justifyContent: 'center', alignItems: 'center', padding: 24 },
+  successBox:         { backgroundColor: '#fff', borderRadius: 24, padding: 28,
+                        width: '100%', alignItems: 'center', gap: 10 },
+  successIconWrap:    { width: 88, height: 88, borderRadius: 44,
+                        backgroundColor: '#FFF3E8',
+                        alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  successTitle:       { fontSize: 22, fontWeight: '800', color: '#000933', letterSpacing: -0.4 },
+  successMsg:         { fontSize: 14, color: '#6B7390', textAlign: 'center', lineHeight: 20 },
+  successBtn:         { marginTop: 8, width: '100%', height: 50, borderRadius: 14,
+                        backgroundColor: '#F2760F', alignItems: 'center', justifyContent: 'center' },
+  successBtnText:     { fontSize: 15, fontWeight: '700', color: '#fff' },
 });
