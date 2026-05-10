@@ -28,12 +28,16 @@ export function LoginEntregador({ onLoginSuccess }: LoginEntregadorProps) {
     }
     setError('');
     setLoading(true);
+    console.log('[Entregador][Login] Tentando login — CPF:', cpf);
     try {
       await login(cpf, senha);
+      console.log('[Entregador][Login] Login bem-sucedido');
       onLoginSuccess?.();
       router.replace('/');
     } catch (e: any) {
-      setError(e?.message ?? 'CPF ou senha incorretos. Tente novamente.');
+      console.error('[Entregador][Login] Erro:', e);
+      const isNetwork = e?.message && (e.message.includes('Network') || e.message.includes('fetch') || e.message.includes('Failed'));
+      setError(isNetwork ? 'Sem conexão com o servidor. Verifique sua internet.' : (e?.message ?? 'CPF ou senha incorretos. Tente novamente.'));
     } finally {
       setLoading(false);
     }

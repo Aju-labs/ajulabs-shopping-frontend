@@ -572,8 +572,10 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
     // Último passo: envia cadastro real
     setLoading(true);
     setSubmitError('');
+    console.log('[Entregador][Onboarding] Enviando cadastro — nome:', data.nome, '| cpf:', data.cpf, '| email:', data.email, '| transporte:', data.transporte);
     try {
       const celDigits = (data.celular || '').replace(/\D/g, '');
+      console.log('[Entregador][Onboarding] Registrando conta...');
       await registrar({
         nome:           data.nome,
         cpf:            (data.cpf || '').replace(/\D/g, ''),
@@ -583,23 +585,26 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         tipoTransporte: (data.transporte || 'moto') as 'bike' | 'moto' | 'carro',
       });
       const currentToken = useAuthEntregadorStore.getState().token;
+      console.log('[Entregador][Onboarding] Conta criada — token:', currentToken ? 'presente' : 'ausente');
 
       // Salvar veículo
       if (currentToken) {
         if (data.transporte === 'bike') {
+          console.log('[Entregador][Onboarding] Cadastrando veículo (bicicleta)...');
           await EntregadorService.cadastrarVeiculo(currentToken, {
             placa:  'BICICLETA',
             modelo: 'Bicicleta',
             cor:    (data.cor || 'Não informado').trim(),
             ano:    parseInt(data.ano) || new Date().getFullYear(),
-          }).catch(() => {});
+          }).catch(err => console.warn('[Entregador][Onboarding] Falha ao cadastrar veículo:', err));
         } else if (data.placa && data.modelo) {
+          console.log('[Entregador][Onboarding] Cadastrando veículo:', data.modelo, data.placa);
           await EntregadorService.cadastrarVeiculo(currentToken, {
             placa:  data.placa.trim(),
             modelo: data.modelo.trim(),
             cor:    (data.cor || 'Não informado').trim(),
             ano:    parseInt(data.ano) || new Date().getFullYear(),
-          }).catch(() => {});
+          }).catch(err => console.warn('[Entregador][Onboarding] Falha ao cadastrar veículo:', err));
         }
       }
 
@@ -608,33 +613,42 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         const hasPix   = !!data.pix;
         const temConta = !hasPix && !!data.banco && !!data.agencia && !!data.conta;
         if (hasPix) {
+          console.log('[Entregador][Onboarding] Salvando chave Pix:', data.pixTipo, data.pix);
           await EntregadorService.atualizarDadosBancarios(currentToken, {
             tipo: 'pix',
             chavePix: data.pix,
-          }).catch(() => {});
+          }).catch(err => console.warn('[Entregador][Onboarding] Falha ao salvar Pix:', err));
         } else if (temConta) {
+          console.log('[Entregador][Onboarding] Salvando conta bancária — banco:', data.banco);
           await EntregadorService.atualizarDadosBancarios(currentToken, {
             tipo: 'conta',
             banco:   data.banco,
             agencia: data.agencia,
             conta:   data.conta,
-          }).catch(() => {});
+          }).catch(err => console.warn('[Entregador][Onboarding] Falha ao salvar conta bancária:', err));
         }
       }
 
       // Upload dos documentos de identidade
       if (currentToken && frenteUri && versoUri) {
-        await EntregadorService.uploadDocumentosIdentidade(currentToken, frenteUri, versoUri).catch(() => {});
+        console.log('[Entregador][Onboarding] Enviando documentos de identidade...');
+        await EntregadorService.uploadDocumentosIdentidade(currentToken, frenteUri, versoUri)
+          .catch(err => console.warn('[Entregador][Onboarding] Falha ao enviar documentos:', err));
       }
 
       // Upload da foto de perfil após o registro (token já disponível no store)
       if (photoUri && currentToken) {
+        console.log('[Entregador][Onboarding] Enviando foto de perfil...');
         const url = await EntregadorService.atualizarFoto(currentToken, photoUri);
         await setFotoUrl(url);
       }
+
+      console.log('[Entregador][Onboarding] Cadastro concluído com sucesso');
       onDone('submitted');
     } catch (e: any) {
-      setSubmitError(e?.message ?? 'Erro ao cadastrar. Tente novamente.');
+      console.error('[Entregador][Onboarding] Erro no cadastro:', e);
+      const isNetwork = e?.message && (e.message.includes('Network') || e.message.includes('fetch') || e.message.includes('Failed'));
+      setSubmitError(isNetwork ? 'Sem conexão com o servidor. Verifique sua internet.' : (e?.message ?? 'Erro ao cadastrar. Tente novamente.'));
     } finally {
       setLoading(false);
     }

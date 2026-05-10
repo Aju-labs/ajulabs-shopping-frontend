@@ -210,12 +210,20 @@ export function LoginLojista({ onLoginSuccess }: LoginLojistaProps) {
     }
     setError('');
     setLoading(true);
+    console.log('[Lojista][Login] Tentando login — CNPJ:', cnpj);
     try {
       await login(cnpj, senha);
+      console.log('[Lojista][Login] Login bem-sucedido');
       onLoginSuccess?.();
       router.replace('/(lojista)/pedidos');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'CNPJ ou senha incorretos. Tente novamente.';
+      console.error('[Lojista][Login] Erro:', err);
+      const isNetwork = err instanceof Error && (err.message.includes('Network') || err.message.includes('fetch') || err.message.includes('Failed'));
+      const msg = isNetwork
+        ? 'Sem conexão com o servidor. Verifique sua internet.'
+        : err instanceof Error
+        ? err.message
+        : 'CNPJ ou senha incorretos. Tente novamente.';
       setError(msg);
     } finally {
       setLoading(false);

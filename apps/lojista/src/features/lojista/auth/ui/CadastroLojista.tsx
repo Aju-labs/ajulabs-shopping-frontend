@@ -122,6 +122,7 @@ export function CadastroLojista({ onCadastroSuccess }: CadastroLojistaProps) {
     }
     setErrorGeral('');
     setLoading(true);
+    console.log('[Lojista][Cadastro] Enviando cadastro — cnpj:', form.cnpj, '| nomeLoja:', form.nomeLoja, '| email:', form.email);
     try {
       await registrar({
         cnpj: form.cnpj,
@@ -130,10 +131,17 @@ export function CadastroLojista({ onCadastroSuccess }: CadastroLojistaProps) {
         email: form.email,
         senha: form.senha,
       });
+      console.log('[Lojista][Cadastro] Cadastro bem-sucedido');
       onCadastroSuccess?.();
       router.replace('/(lojista)/pedidos');
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Não foi possível criar sua conta. Tente novamente.';
+      console.error('[Lojista][Cadastro] Erro:', e);
+      const isNetwork = e instanceof Error && (e.message.includes('Network') || e.message.includes('fetch') || e.message.includes('Failed'));
+      const msg = isNetwork
+        ? 'Sem conexão com o servidor. Verifique sua internet.'
+        : e instanceof Error
+        ? e.message
+        : 'Não foi possível criar sua conta. Tente novamente.';
       setErrorGeral(msg);
     } finally {
       setLoading(false);

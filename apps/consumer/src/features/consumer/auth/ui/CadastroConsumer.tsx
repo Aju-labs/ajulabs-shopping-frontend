@@ -61,12 +61,20 @@ export function CadastroConsumer({ onCadastroSuccess }: CadastroConsumerProps) {
   const handleCadastro = useCallback(async () => {
     if (!validate()) return;
     setLoading(true);
+    console.log('[Consumer][Cadastro] Enviando cadastro — nome:', nome, '| cpf:', cpf, '| email:', email);
     try {
       await registrar({ nome, cpf, telefone, email, senha });
+      console.log('[Consumer][Cadastro] Cadastro bem-sucedido');
       onCadastroSuccess?.();
       router.replace('/(consumer)/chat');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.';
+      console.error('[Consumer][Cadastro] Erro:', err);
+      const isNetwork = err instanceof Error && (err.message.includes('Network') || err.message.includes('fetch') || err.message.includes('Failed'));
+      const msg = isNetwork
+        ? 'Sem conexão com o servidor. Verifique sua internet.'
+        : err instanceof Error
+        ? err.message
+        : 'Erro ao criar conta. Tente novamente.';
       setErrors({ geral: msg });
     } finally {
       setLoading(false);

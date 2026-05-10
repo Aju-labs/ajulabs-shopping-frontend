@@ -30,11 +30,17 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
     setError('');
     setLoading(true);
+    console.log('[Consumer][Login] Tentando login — CPF:', cpf);
     try {
       await login(cpf, senha);
+      console.log('[Consumer][Login] Login bem-sucedido');
       onLoginSuccess?.();
     } catch (err) {
-      const msg = err instanceof Error
+      console.error('[Consumer][Login] Erro:', err);
+      const isNetwork = err instanceof Error && (err.message.includes('Network') || err.message.includes('fetch') || err.message.includes('Failed'));
+      const msg = isNetwork
+        ? 'Sem conexão com o servidor. Verifique sua internet.'
+        : err instanceof Error
         ? err.message
         : typeof err === 'string'
         ? err
