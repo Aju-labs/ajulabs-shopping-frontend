@@ -14,6 +14,7 @@ const STATUS_TO_IDX: Record<StatusPedido, number> = {
   aguardando: -1,
   confirmado: 0,
   preparando: 1,
+  pronto: 2,
   saiu_entrega: 2,
   entregue: 3,
   cancelado: -1,

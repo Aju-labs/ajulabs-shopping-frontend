@@ -7,6 +7,7 @@ const STATUS_CONFIG: Record<StatusPedido, { label: string; icon: string; color: 
   aguardando:    { label: 'Aguardando',     icon: 'time-outline',       color: colors.n600,    bg: colors.n100 },
   confirmado:    { label: 'Confirmado',     icon: 'checkmark-circle',   color: '#185FA5',      bg: '#E6F1FB' },
   preparando:    { label: 'Preparando',     icon: 'restaurant-outline', color: '#854F0B',      bg: '#FAEEDA' },
+  pronto:        { label: 'Pronto',         icon: 'bag-check-outline',  color: '#2D6A2D',      bg: '#E6F4E6' },
   saiu_entrega:  { label: 'A caminho',      icon: 'bicycle-outline',    color: colors.orange600, bg: colors.orange100 },
   entregue:      { label: 'Entregue',       icon: 'checkmark-done',     color: colors.mintText,  bg: 'rgba(57,255,137,0.15)' },
   cancelado:     { label: 'Cancelado',      icon: 'close-circle',       color: '#A32D2D',      bg: '#FCEBEB' },
