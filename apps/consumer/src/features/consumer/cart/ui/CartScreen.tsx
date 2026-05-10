@@ -59,7 +59,7 @@ export function CartScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.btnBack}>
+          <TouchableOpacity onPress={() => router.push('/(consumer)/vitrines')} style={styles.btnBack}>
             <Ionicons name="chevron-back" size={20} color={colors.navy} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
@@ -86,7 +86,7 @@ export function CartScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.btnBack} activeOpacity={0.85}>
+        <TouchableOpacity onPress={() => router.push('/(consumer)/vitrines')} style={styles.btnBack} activeOpacity={0.85}>
           <Ionicons name="chevron-back" size={20} color={colors.navy} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>

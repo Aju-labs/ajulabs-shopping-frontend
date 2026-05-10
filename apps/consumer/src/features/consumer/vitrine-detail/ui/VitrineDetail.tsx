@@ -83,7 +83,7 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
     return (
       <View style={[styles.container, { backgroundColor: bgMain, alignItems: 'center', justifyContent: 'center' }]}>
         <Text style={{ color: textColor, fontSize: 16 }}>Loja não encontrada.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
+        <TouchableOpacity onPress={() => router.push('/(consumer)/vitrines')} style={{ marginTop: 12 }}>
           <Text style={{ color: colors.orange, fontWeight: '600' }}>Voltar</Text>
         </TouchableOpacity>
       </View>
@@ -102,7 +102,7 @@ export function VitrineDetail({ lojaId, dark = false }: VitrineDetailProps) {
         <View style={styles.bannerWrapper}>
           <BannerImg uri={loja.imagem} />
           <View style={styles.bannerGradient} />
-          <TouchableOpacity style={styles.btnBack} onPress={() => router.back()} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.btnBack} onPress={() => router.push('/(consumer)/vitrines')} activeOpacity={0.85}>
             <Ionicons name="chevron-back" size={20} color={colors.navy} />
           </TouchableOpacity>
         </View>
