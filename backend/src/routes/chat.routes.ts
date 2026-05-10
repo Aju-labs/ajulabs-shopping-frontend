@@ -29,7 +29,8 @@ Formato obrigatório:
 }
 
 Regras:
-- "produtos" só aparece quando o usuário pede algo específico para comprar
+- "produtos" DEVE aparecer sempre que o usuário: pedir algo para comprar, pedir indicação de lojas, querer ver opções, mencionar qualquer categoria, ou pedir recomendações gerais — inclua sempre de 1 a 3 produtos representativos do catálogo
+- Quando recomendar lojas, escolha lojas diferentes e inclua 1 produto representativo de cada
 - Use APENAS lojas e produtos da lista abaixo — nunca invente lojas ou produtos
 - Use o "id" real do produto exatamente como listado abaixo
 - Máximo 3 produtos por resposta
@@ -112,20 +113,41 @@ async function buscarProdutosReais(ids: string[], texto: string): Promise<Produt
     take: 3,
   });
 
-  // Se a IA inventou IDs (não achou nenhum real), busca por nome/categoria no banco
+  // Se a IA inventou IDs, busca por palavras-chave do texto do usuário
+  if (produtos.length === 0 && texto.trim().length > 0) {
+    const palavras = texto.trim().split(/\s+/).filter(p => p.length > 2);
+    if (palavras.length > 0) {
+      produtos = await prisma.produto.findMany({
+        where: {
+          disponivel: true,
+          OR: palavras.flatMap(p => [
+            { nome: { contains: p, mode: 'insensitive' as const } },
+            { categoria: { contains: p, mode: 'insensitive' as const } },
+            { descricao: { contains: p, mode: 'insensitive' as const } },
+          ]),
+        },
+        include,
+        take: 3,
+      });
+    }
+  }
+
+  // Último recurso: retorna produtos em destaque de lojas abertas distintas
   if (produtos.length === 0) {
-    produtos = await prisma.produto.findMany({
-      where: {
-        disponivel: true,
-        OR: [
-          { nome: { contains: texto, mode: 'insensitive' } },
-          { categoria: { contains: texto, mode: 'insensitive' } },
-          { descricao: { contains: texto, mode: 'insensitive' } },
-        ],
-      },
-      include,
+    const lojas = await prisma.loja.findMany({
+      where: { aberta: true },
+      select: { id: true },
       take: 3,
     });
+    if (lojas.length > 0) {
+      produtos = await prisma.produto.findMany({
+        where: { disponivel: true, lojaId: { in: lojas.map(l => l.id) } },
+        include,
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        distinct: ['lojaId'],
+      });
+    }
   }
 
   return produtos.map(p => ({
@@ -167,10 +189,10 @@ router.post('/mensagem', async (req: Request, res: Response) => {
     const resposta = JSON.parse(raw);
 
     // Validação server-side: substituir produtos pela versão real do banco
-    if (Array.isArray(resposta.produtos) && resposta.produtos.length > 0) {
-      const ids = resposta.produtos.map((p: any) => String(p.id ?? '')).filter(Boolean);
-      resposta.produtos = await buscarProdutosReais(ids, texto);
-    }
+    const ids = Array.isArray(resposta.produtos)
+      ? resposta.produtos.map((p: any) => String(p.id ?? '')).filter(Boolean)
+      : [];
+    resposta.produtos = await buscarProdutosReais(ids, texto);
 
     res.json(resposta);
   } catch (error) {
