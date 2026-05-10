@@ -35,6 +35,7 @@ export function ProfileScreen({ onLogout, onNavigate }: ProfileScreenProps) {
   const [perfil, setPerfil] = useState<any>(null);
   const [ganhos, setGanhos] = useState<any>(null);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [photoExpanded, setPhotoExpanded] = useState(false);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -138,15 +139,19 @@ export function ProfileScreen({ onLogout, onNavigate }: ProfileScreenProps) {
       >
         <View style={s.hero}>
           <View style={s.heroRow}>
-            <TouchableOpacity style={s.avatar} onPress={handleTrocarFoto} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={s.avatar}
+              onPress={fotoPerfil ? () => setPhotoExpanded(true) : handleTrocarFoto}
+              activeOpacity={0.8}
+            >
               {fotoPerfil ? (
                 <Image source={{ uri: fotoPerfil }} style={s.avatarImg} />
               ) : (
                 <Text style={s.avatarText}>{initials}</Text>
               )}
-              <View style={s.avatarEdit}>
+              <TouchableOpacity style={s.avatarEdit} onPress={handleTrocarFoto} activeOpacity={0.8}>
                 <Ionicons name="camera" size={10} color="#FFFFFF" />
-              </View>
+              </TouchableOpacity>
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={s.heroName}>{nome}</Text>
@@ -217,6 +222,25 @@ export function ProfileScreen({ onLogout, onNavigate }: ProfileScreenProps) {
 
         <Text style={s.version}>AjuLabs · Entregador v1.0</Text>
       </ScrollView>
+
+      <Modal visible={photoExpanded} transparent animationType="fade" onRequestClose={() => setPhotoExpanded(false)}>
+        <View style={s.photoOverlay}>
+          <TouchableOpacity style={s.photoClose} onPress={() => setPhotoExpanded(false)} activeOpacity={0.8}>
+            <Ionicons name="close" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          {fotoPerfil && (
+            <Image source={{ uri: fotoPerfil }} style={s.photoFull} resizeMode="contain" />
+          )}
+          <TouchableOpacity
+            style={s.photoTrocarBtn}
+            onPress={() => { setPhotoExpanded(false); handleTrocarFoto(); }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="camera" size={16} color="#FFFFFF" />
+            <Text style={s.photoTrocarText}>Trocar foto</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       <Modal visible={logoutVisible} transparent animationType="fade" onRequestClose={() => setLogoutVisible(false)}>
         <View style={s.modalOverlay}>
@@ -368,4 +392,38 @@ const s = StyleSheet.create({
     borderColor: '#E4E7F1',
   },
   modalBtnCancelText: { fontSize: 14, fontWeight: '600', color: '#000933' },
+  photoOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoClose: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  photoFull: {
+    width: '100%',
+    height: '65%',
+  },
+  photoTrocarBtn: {
+    position: 'absolute',
+    bottom: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F2760F',
+    paddingHorizontal: 22,
+    paddingVertical: 13,
+    borderRadius: 30,
+  },
+  photoTrocarText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 });
