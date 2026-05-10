@@ -54,7 +54,7 @@ export function TrackingScreen({ pedidoId }: Props) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.btnBack} activeOpacity={0.85}>
+        <TouchableOpacity onPress={() => router.navigate('/(consumer)/pedidos')} style={styles.btnBack} activeOpacity={0.85}>
           <Text style={{ fontSize: 20, color: colors.navy, fontWeight: '600' }}>‹</Text>
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
