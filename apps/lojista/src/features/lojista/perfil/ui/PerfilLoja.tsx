@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  StyleSheet, Switch, Alert, ActivityIndicator, Image,
+  StyleSheet, Alert, ActivityIndicator, Image,
   KeyboardAvoidingView, Platform, Modal, FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -78,6 +78,26 @@ const HORARIOS_INICIAIS: HorarioDia[] = [
   { dia: 'Domingo',       abreviacao: 'Dom', ativo: false, abertura: '--:--', fechamento: '--:--' },
 ];
 
+function Toggle({
+  value,
+  onValueChange,
+  activeColor = colors.orange,
+}: {
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+  activeColor?: string;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={() => onValueChange(!value)}
+      activeOpacity={0.85}
+      style={[styles.toggleTrack, { backgroundColor: value ? activeColor : colors.n300 }]}
+    >
+      <View style={[styles.toggleThumb, { transform: [{ translateX: value ? 22 : 2 }] }]} />
+    </TouchableOpacity>
+  );
+}
+
 function formatarHora(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 4);
   if (digits.length <= 2) return digits;
@@ -118,60 +138,124 @@ function FormField({
   );
 }
 
-function HorarioRow({
-  horario, onChange, dark,
+function HorarioGrid({
+  horarios,
+  onChange,
+  dark,
 }: {
-  horario: HorarioDia;
-  onChange: (updated: HorarioDia) => void;
+  horarios: HorarioDia[];
+  onChange: (index: number, updated: HorarioDia) => void;
   dark: boolean;
 }) {
-  const textColor = dark ? colors.n0    : colors.navy;
-  const subColor  = dark ? 'rgba(255,255,255,0.6)' : colors.n600;
-  const inputBg   = dark ? 'rgba(255,255,255,0.05)' : colors.n50;
-  const border    = dark ? 'rgba(255,255,255,0.08)' : colors.n200;
+  const [sel, setSel] = useState(0);
+  const h = horarios[sel];
+
+  const textColor   = dark ? colors.n0 : colors.navy;
+  const subColor    = dark ? 'rgba(255,255,255,0.45)' : colors.n500;
+  const inputBg     = dark ? 'rgba(255,255,255,0.07)' : colors.n0;
+  const inputBorder = dark ? 'rgba(255,255,255,0.14)' : colors.n200;
+  const panelDiv    = dark ? 'rgba(255,255,255,0.08)' : colors.n100;
 
   return (
-    <View style={styles.dayRow}>
-      {/* Linha 1: dia + switch */}
-      <View style={styles.dayTopRow}>
-        <Text style={[styles.dayName, { color: textColor }]}>{horario.abreviacao}</Text>
-        <Switch
-          value={horario.ativo}
-          onValueChange={v => onChange({
-            ...horario, ativo: v,
-            abertura:   v ? '08:00' : '--:--',
-            fechamento: v ? '18:00' : '--:--',
-          })}
-          trackColor={{ false: colors.n200, true: '#046C2E' }}
-          thumbColor="#fff"
-          style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
-        />
+    <View>
+      {/* ── Strip de dias ───────────────────────── */}
+      <View style={styles.weekStrip}>
+        {horarios.map((day, i) => {
+          const isSelected = sel === i;
+          return (
+            <TouchableOpacity
+              key={day.dia}
+              style={[
+                styles.dayPill,
+                day.ativo && !isSelected && styles.dayPillActive,
+                isSelected && styles.dayPillSelected,
+              ]}
+              onPress={() => setSel(i)}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.dayPillText,
+                day.ativo && !isSelected && styles.dayPillTextActive,
+                isSelected && styles.dayPillTextSelected,
+              ]}>
+                {day.abreviacao}
+              </Text>
+              <View style={[
+                styles.dayPillDot,
+                { backgroundColor: isSelected ? 'rgba(255,255,255,0.55)' : day.ativo ? colors.orange : colors.n300 },
+              ]} />
+            </TouchableOpacity>
+          );
+        })}
       </View>
-      {/* Linha 2: inputs de horário */}
-      <View style={[styles.dayTimeRow, !horario.ativo && { opacity: 0.4 }]}>
-        <Text style={[styles.timeRangeLabel, { color: subColor }]}>Abertura</Text>
-        <TextInput
-          style={[styles.timeInput, { backgroundColor: inputBg, borderColor: border, color: textColor }]}
-          value={horario.abertura}
-          onChangeText={v => onChange({ ...horario, abertura: formatarHora(v) })}
-          editable={horario.ativo}
-          keyboardType="numeric"
-          maxLength={5}
-          placeholder="08:00"
-          placeholderTextColor={subColor}
-        />
-        <Text style={[styles.timeSep, { color: subColor }]}>–</Text>
-        <Text style={[styles.timeRangeLabel, { color: subColor }]}>Fechamento</Text>
-        <TextInput
-          style={[styles.timeInput, { backgroundColor: inputBg, borderColor: border, color: textColor }]}
-          value={horario.fechamento}
-          onChangeText={v => onChange({ ...horario, fechamento: formatarHora(v) })}
-          editable={horario.ativo}
-          keyboardType="numeric"
-          maxLength={5}
-          placeholder="18:00"
-          placeholderTextColor={subColor}
-        />
+
+      {/* ── Painel de edição ────────────────────── */}
+      <View style={[styles.dayEditPanel, { borderTopColor: panelDiv }]}>
+
+        {/* Cabeçalho: nome + toggle */}
+        <View style={styles.dayEditHead}>
+          <View style={{ gap: 3 }}>
+            <Text style={[styles.dayEditName, { color: textColor }]}>{h.dia}</Text>
+            <View style={styles.dayEditStatusRow}>
+              <View style={[styles.dayEditDot, { backgroundColor: h.ativo ? colors.orange : colors.n300 }]} />
+              <Text style={[styles.dayEditStatus, { color: h.ativo ? colors.orange : subColor }]}>
+                {h.ativo ? 'Aberto neste dia' : 'Fechado neste dia'}
+              </Text>
+            </View>
+          </View>
+          <Toggle
+            value={h.ativo}
+            onValueChange={v => onChange(sel, {
+              ...h, ativo: v,
+              abertura:   v ? '08:00' : '--:--',
+              fechamento: v ? '18:00' : '--:--',
+            })}
+          />
+        </View>
+
+        {/* Inputs de horário ou mensagem fechado */}
+        {h.ativo ? (
+          <View style={styles.dayEditTimes}>
+            <View style={styles.dayTimeSlot}>
+              <Text style={[styles.dayTimeSlotLabel, { color: subColor }]}>ABERTURA</Text>
+              <TextInput
+                style={[styles.dayTimeSlotInput, { backgroundColor: inputBg, borderColor: inputBorder, color: textColor }]}
+                value={h.abertura}
+                onChangeText={v => onChange(sel, { ...h, abertura: formatarHora(v) })}
+                keyboardType="numeric"
+                maxLength={5}
+                placeholder="00:00"
+                placeholderTextColor={subColor}
+              />
+            </View>
+
+            <View style={styles.dayTimeArrow}>
+              <View style={[styles.dayTimeArrowLine, { backgroundColor: panelDiv }]} />
+              <Ionicons name="arrow-forward-outline" size={16} color={subColor} />
+              <View style={[styles.dayTimeArrowLine, { backgroundColor: panelDiv }]} />
+            </View>
+
+            <View style={styles.dayTimeSlot}>
+              <Text style={[styles.dayTimeSlotLabel, { color: subColor }]}>FECHAMENTO</Text>
+              <TextInput
+                style={[styles.dayTimeSlotInput, { backgroundColor: inputBg, borderColor: inputBorder, color: textColor }]}
+                value={h.fechamento}
+                onChangeText={v => onChange(sel, { ...h, fechamento: formatarHora(v) })}
+                keyboardType="numeric"
+                maxLength={5}
+                placeholder="00:00"
+                placeholderTextColor={subColor}
+              />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.dayClosedMsg}>
+            <Ionicons name="moon-outline" size={22} color={subColor} />
+            <Text style={[styles.dayClosedTxt, { color: subColor }]}>
+              Sem horário configurado para este dia
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -609,18 +693,11 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
 
         <Text style={[styles.sectionLabel, { color: subColor }]}>HORÁRIO DE FUNCIONAMENTO</Text>
         <View style={[styles.card, { borderColor: border, backgroundColor: surface }]}>
-          {horarios.map((horario, index) => (
-            <View
-              key={horario.dia}
-              style={index < horarios.length - 1 && { borderBottomWidth: 1, borderBottomColor: border }}
-            >
-              <HorarioRow
-                horario={horario}
-                onChange={updated => updateHorario(index, updated)}
-                dark={dark}
-              />
-            </View>
-          ))}
+          <HorarioGrid
+            horarios={horarios}
+            onChange={updateHorario}
+            dark={dark}
+          />
         </View>
 
         <Text style={[styles.sectionLabel, { color: subColor }]}>AGENDAMENTO</Text>
@@ -630,11 +707,9 @@ export function PerfilLoja({ dark = false }: PerfilLojaProps) {
               <Text style={[styles.agendTitle, { color: textColor }]}>Aceitar pedidos agendados</Text>
               <Text style={[styles.agendSub, { color: subColor }]}>Cliente escolhe data e hora fora do horário</Text>
             </View>
-            <Switch
+            <Toggle
               value={loja.aceitaAgendamento}
               onValueChange={v => updateLoja('aceitaAgendamento', v)}
-              trackColor={{ false: colors.n200, true: '#046C2E' }}
-              thumbColor="#fff"
             />
           </View>
           {loja.aceitaAgendamento && (
@@ -752,18 +827,47 @@ const styles = StyleSheet.create({
                       textTransform: 'uppercase', letterSpacing: 0.4 },
   fieldInput:       { borderRadius: 10, borderWidth: 1,
                       paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
-  // HorarioRow — layout em 2 linhas para melhor responsividade mobile
-  dayRow:           { paddingHorizontal: 14, paddingVertical: 10 },
-  dayTopRow:        { flexDirection: 'row', alignItems: 'center',
-                      justifyContent: 'space-between', marginBottom: 8 },
-  dayName:          { fontSize: 13, fontWeight: '600' },
-  dayTimeRow:       { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  timeRangeLabel:   { fontSize: 11, fontWeight: '500', minWidth: 56 },
-  timeInput:        { flex: 1, borderRadius: 8, borderWidth: 1,
-                      paddingVertical: 8, paddingHorizontal: 10,
-                      fontSize: 13, fontWeight: '600', textAlign: 'center',
-                      minWidth: 64 },
-  timeSep:          { fontSize: 14, fontWeight: '600', marginHorizontal: 2 },
+  // ── Toggle customizado ───────────────────────
+  toggleTrack:      { width: 48, height: 28, borderRadius: 14, justifyContent: 'center' },
+  toggleThumb:      { width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff',
+                      shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.2, shadowRadius: 2, elevation: 3 },
+
+  // ── HorarioGrid ─────────────────────────────
+  weekStrip:            { flexDirection: 'row', padding: 12, gap: 5 },
+
+  dayPill:              { flex: 1, paddingVertical: 9, borderRadius: 10,
+                          alignItems: 'center', justifyContent: 'center', gap: 5,
+                          backgroundColor: colors.n100 },
+  dayPillActive:        { backgroundColor: colors.orange100 },
+  dayPillSelected:      { backgroundColor: colors.navy },
+  dayPillText:          { fontSize: 11, fontWeight: '800', color: colors.n500 },
+  dayPillTextActive:    { color: colors.orange600 },
+  dayPillTextSelected:  { color: '#fff' },
+  dayPillDot:           { width: 5, height: 5, borderRadius: 2.5 },
+
+  dayEditPanel:         { borderTopWidth: 1, padding: 16, gap: 18 },
+  dayEditHead:          { flexDirection: 'row', alignItems: 'center',
+                          justifyContent: 'space-between' },
+  dayEditName:          { fontSize: 17, fontWeight: '800' },
+  dayEditStatusRow:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dayEditDot:           { width: 7, height: 7, borderRadius: 3.5 },
+  dayEditStatus:        { fontSize: 12, fontWeight: '600' },
+
+  dayEditTimes:         { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  dayTimeSlot:          { flex: 1, gap: 8 },
+  dayTimeSlotLabel:     { fontSize: 10, fontWeight: '700',
+                          textTransform: 'uppercase', letterSpacing: 0.6 },
+  dayTimeSlotInput:     { borderRadius: 12, borderWidth: 1.5,
+                          paddingVertical: 14, paddingHorizontal: 8,
+                          fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  dayTimeArrow:         { flexDirection: 'row', alignItems: 'center', gap: 5,
+                          paddingBottom: 17 },
+  dayTimeArrowLine:     { width: 10, height: 1.5, borderRadius: 1 },
+
+  dayClosedMsg:         { flexDirection: 'row', alignItems: 'center', gap: 12,
+                          paddingVertical: 8 },
+  dayClosedTxt:         { fontSize: 13, flex: 1 },
   agendRow:         { flexDirection: 'row', alignItems: 'center',
                       justifyContent: 'space-between', padding: 14, gap: 12 },
   agendInfo:        { flex: 1 },

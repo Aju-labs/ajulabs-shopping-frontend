@@ -58,6 +58,7 @@ function ProdutoCard({
 
   return (
     <View style={styles.card}>
+      <ProdutoThumb uri={produto.imagem} nome={produto.nome} />
 
       <View style={styles.cardContent}>
         <View style={styles.cardTopRow}>
