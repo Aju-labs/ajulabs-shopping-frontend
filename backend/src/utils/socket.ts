@@ -1,11 +1,12 @@
 import { Server } from 'socket.io';
 import type http from 'http';
+import { socketCorsOptions } from './cors';
 
 let io: Server | null = null;
 
 export function initSocket(server: http.Server): Server {
   io = new Server(server, {
-    cors: { origin: '*' },
+    cors: socketCorsOptions,
   });
 
   io.on('connection', (socket) => {
