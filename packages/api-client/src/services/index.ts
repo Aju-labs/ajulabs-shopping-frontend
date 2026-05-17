@@ -738,8 +738,66 @@ function mapEndereco(e: any): EnderecoSalvo {
     bairro: e.cidade ? `${e.bairro}, ${e.cidade}` : e.bairro,
     cep: e.cep,
     padrao: e.padrao ?? false,
+    ruaRaw: e.rua,
+    numero: e.numero,
+    bairroRaw: e.bairro,
+    cidade: e.cidade,
+    complemento: e.complemento,
   };
 }
+
+// Redimensiona para 200x200 via Canvas (web only)
+async function resizeParaDataUri(uri: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img') as HTMLImageElement;
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const SIZE = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, SIZE, SIZE);
+      resolve(canvas.toDataURL('image/jpeg', 0.65));
+    };
+    img.onerror = reject;
+    img.src = uri;
+  });
+}
+
+export const PerfilService = {
+  atualizarAvatar: async (token: string, imageUri: string): Promise<string> => {
+    // Web: redimensiona com Canvas e envia via PUT /perfil (não depende do novo endpoint)
+    if (typeof document !== 'undefined') {
+      const avatarUrl = await resizeParaDataUri(imageUri);
+      const res = await fetch(`${API_URL}/perfil`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ avatarUrl }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(typeof err.error === 'string' ? err.error : `HTTP ${res.status}`);
+      }
+      const { usuario } = await res.json();
+      return usuario.avatarUrl;
+    }
+
+    // Native: envia via PATCH /perfil/avatar (requer backend atualizado)
+    const form = new FormData();
+    form.append('avatar', { uri: imageUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
+    const res = await fetch(`${API_URL}/perfil/avatar`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(typeof err.error === 'string' ? err.error : `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.avatarUrl;
+  },
+};
 
 export const EnderecoService = {
   listar: async (token: string): Promise<EnderecoSalvo[]> => {
@@ -759,6 +817,21 @@ export const EnderecoService = {
       body: JSON.stringify(dados),
     });
     if (!res.ok) throw new Error('Erro ao criar endereço');
+    const { endereco } = await res.json();
+    return mapEndereco(endereco);
+  },
+
+  atualizar: async (
+    token: string,
+    id: string,
+    dados: { apelido?: string; rua?: string; numero?: string; bairro?: string; cep?: string; cidade?: string; complemento?: string },
+  ): Promise<EnderecoSalvo> => {
+    const res = await fetch(`${API_URL}/enderecos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+      body: JSON.stringify(dados),
+    });
+    if (!res.ok) throw new Error('Erro ao atualizar endereço');
     const { endereco } = await res.json();
     return mapEndereco(endereco);
   },
